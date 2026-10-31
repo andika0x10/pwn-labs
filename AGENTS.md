@@ -20,3 +20,21 @@ Consult these guides before working on related tasks:
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+
+## Lingkungan
+
+- Pengembangan di WSL Ubuntu, repo di `~/projects/pwn-labs` (filesystem WSL). Node v24.20.0 dari nvm (`which node` menunjuk `~/.nvm`).
+- Wrangler sudah login di WSL (`npx wrangler whoami`). Jangan menjalankan `wrangler login`.
+- Tanpa sudo. Chromium untuk Playwright dijalankan dengan pustaka yang diekstrak ke `~/.cache/pw-libs/root` (lihat `spike/REPORT.md`).
+- Belum terpasang: `nasm`, `emcc`. Ada: `gcc`, `make`.
+
+## Infrastruktur
+
+| Resource | Nama | Dibuat dengan | Catatan |
+| --- | --- | --- | --- |
+| Worker (spike Fase 0) | `pwn-labs-spike` | `npx wrangler deploy` di `spike/worker` | Hanya pengukuran. Hapus setelah Fase 0 disetujui (butuh konfirmasi user). |
+
+## Keputusan
+
+- Fase 0: emulator memakai `@alexaltea/unicorn-js` varian x86 (GPL-2.0), dengan glue yang di-patch oleh skrip ekstraksi dan trampolin WASM statis. Detail dan angka di `spike/REPORT.md`.
+- Fase 0: replay di Worker wajib memakai instance Unicorn yang dipakai ulang, tanpa hook per instruksi, dan inisialisasi di global scope.

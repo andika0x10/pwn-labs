@@ -1,0 +1,9 @@
+{
+  "name": "pwn-labs-spike-probe",
+  "private": true,
+  "description": "Dependensi spike Fase 0 saja (dibuang setelah Fase 1). Jalankan: npm install di folder ini.",
+  "dependencies": {
+    "@alexaltea/unicorn-js": "2.1.4",
+    "playwright-core": "^1.64.1"
+  }
+}
