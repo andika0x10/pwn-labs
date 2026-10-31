@@ -1,0 +1,54 @@
+---
+// Satu elemen utama di landing: potret stack frame setelah buffer meluap.
+const rows = [
+	{ addr: '0xbffff0a0', bytes: '41 41 41 41 41 41 41 41', note: 'buffer[64]', kind: 'buffer' },
+	{ addr: '', bytes: '… 56 byte lagi', note: '', kind: 'gap' },
+	{ addr: '0xbffff0e0', bytes: '41 41 41 41', note: 'saved ebp', kind: 'buffer' },
+	{ addr: '0xbffff0e4', bytes: '96 91 04 08', note: 'return address → win', kind: 'target' },
+] as const;
+---
+
+<figure class="w-full">
+	<div class="overflow-x-auto rounded-base border border-border bg-surface">
+		<table class="w-full border-collapse font-mono text-[12.5px] leading-6">
+			<caption class="sr-only">Isi stack setelah input 68 byte "A" diikuti alamat fungsi win</caption>
+			<thead class="sr-only">
+				<tr><th scope="col">Alamat</th><th scope="col">Byte</th><th scope="col">Arti</th></tr>
+			</thead>
+			<tbody>
+				{
+					rows.map((r) => (
+						<tr
+							class:list={[
+								'border-b border-border last:border-b-0',
+								r.kind === 'target' && 'bg-accent/5',
+							]}
+						>
+							<td
+								class:list={[
+									'whitespace-nowrap py-3 pl-4 pr-3',
+									r.kind === 'target' ? 'border-l-2 border-accent pl-[14px] text-fg' : 'text-muted',
+								]}
+							>
+								{r.addr}
+							</td>
+							<td
+								class:list={[
+									'whitespace-nowrap py-3 pr-3',
+									r.kind === 'gap' && 'text-muted',
+									r.kind === 'target' && 'font-semibold text-accent',
+								]}
+							>
+								{r.bytes}
+							</td>
+							<td class:list={['whitespace-nowrap py-3 pr-3', r.kind === 'target' ? 'text-fg' : 'text-muted']}>{r.note}</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</div>
+	<figcaption class="mt-3 max-w-[48ch] text-sm leading-6 text-muted">
+		Input yang terlalu panjang melewati buffer dan menimpa return address. Saat fungsi selesai, program lompat ke alamat yang kamu tulis.
+	</figcaption>
+</figure>

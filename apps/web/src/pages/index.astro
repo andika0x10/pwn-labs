@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import StackDiagram from '../components/StackDiagram.astro';
+
+const steps = [
+	{ title: 'Baca materi', body: 'Tiap level dibuka dengan penjelasan singkat tentang satu konsep, tanpa teori berlebih.' },
+	{
+		title: 'Jalankan payload',
+		body: 'Tulis payload di workspace dan jalankan di emulator x86 dalam browser. Jalankan per instruksi sambil memantau register dan stack.',
+	},
+	{
+		title: 'Kirim dan naik level',
+		body: 'Server menjalankan ulang payload kamu. Jika berhasil, kamu mendapat flag dan poin, dan level berikutnya terbuka.',
+	},
+];
+
+const worlds = [
+	{ name: 'Stack', body: 'Buffer, variabel, return address, dan lompat ke fungsi win.', status: 'Dalam penulisan' },
+	{ name: 'Shellcode', body: 'Menjalankan kode sendiri dari stack.', status: 'Dalam penulisan' },
+	{ name: 'ROP', body: 'Menyusun potongan kode yang sudah ada.', status: 'Setelah v1' },
+	{ name: 'Format string', body: 'Membaca dan menulis memori lewat printf.', status: 'Setelah v1' },
+];
+---
+
+<BaseLayout>
+	<section class="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-12 px-5 pb-12 pt-16 md:pt-20 lg:grid-cols-[minmax(0,1fr)_30rem] lg:items-center lg:gap-16">
+		<div>
+			<h1 class="max-w-[16ch] text-4xl font-semibold leading-[1.1] tracking-tight md:text-5xl">
+				Belajar binary exploitation dengan menjalankan exploit sendiri.
+			</h1>
+			<p class="mt-6 max-w-[52ch] text-lg leading-8 text-muted">
+				Naik level satu per satu. Emulator x86 berjalan di browser, jadi tidak ada yang perlu dipasang.
+			</p>
+			<div class="mt-8 flex flex-wrap gap-3">
+				<a
+					href="/play"
+					class="rounded-base bg-accent px-5 py-3 text-sm font-medium text-bg transition-colors hover:bg-accent/90"
+					>Mulai bermain</a
+				>
+				<a
+					href="/docs"
+					class="rounded-base border border-border px-5 py-3 text-sm font-medium text-fg transition-colors hover:bg-surface"
+					>Baca docs</a
+				>
+			</div>
+		</div>
+		<StackDiagram />
+	</section>
+
+	<section class="mx-auto max-w-5xl px-5 py-12 md:py-16" aria-labelledby="cara-kerja">
+		<h2 id="cara-kerja" class="text-2xl font-semibold tracking-tight">Cara kerjanya</h2>
+		<ol class="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+			{
+				steps.map((s, i) => (
+					<li class="border-t border-border pt-5">
+						<span class="font-mono text-sm text-accent">{i + 1}</span>
+						<h3 class="mt-3 text-lg font-medium">{s.title}</h3>
+						<p class="mt-2 leading-7 text-muted">{s.body}</p>
+					</li>
+				))
+			}
+		</ol>
+		<p class="mt-10 max-w-[60ch] text-sm leading-6 text-muted">
+			Membaca materi dan menjalankan emulator tidak perlu akun. Masuk dengan GitHub hanya untuk menyimpan progress dan tampil di leaderboard.
+		</p>
+	</section>
+
+	<section class="mx-auto max-w-5xl px-5 py-12 md:py-16" aria-labelledby="world">
+		<h2 id="world" class="text-2xl font-semibold tracking-tight">World</h2>
+		<p class="mt-2 max-w-[56ch] text-muted">Jalur belajar dibagi per topik. Tiap world berisi level yang terbuka berurutan.</p>
+		<ul class="mt-10 border-t border-border">
+			{
+				worlds.map((w) => (
+					<li class="grid gap-1 border-b border-border py-5 md:grid-cols-[10rem_1fr_auto] md:items-baseline md:gap-6">
+						<h3 class="font-medium">{w.name}</h3>
+						<p class="text-muted">{w.body}</p>
+						<span class="text-sm text-muted">{w.status}</span>
+					</li>
+				))
+			}
+		</ul>
+		<p class="mt-8 text-sm">
+			<a class="text-accent underline underline-offset-4" href="/leaderboard">Lihat leaderboard</a>
+		</p>
+	</section>
+</BaseLayout>

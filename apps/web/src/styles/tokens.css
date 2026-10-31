@@ -1,0 +1,27 @@
+:root {
+  --bg: #ffffff;
+  --surface: #fafaf9;
+  --border: #e7e5e4;
+  --text: #1c1917;
+  --text-muted: #78716c;
+  --accent: #2f5bff; /* satu-satunya warna aksen */
+  --success: #15803d;
+  --danger: #b91c1c;
+  --radius: 8px;
+  /* Dinamai *-family agar tidak bentrok dengan --font-* milik tema Tailwind. */
+  --font-family-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-family-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Pewarnaan kode (shiki css-variables) diturunkan dari token. */
+  --astro-code-foreground: var(--text);
+  --astro-code-background: var(--surface);
+  --astro-code-token-constant: var(--accent);
+  --astro-code-token-string: var(--success);
+  --astro-code-token-comment: var(--text-muted);
+  --astro-code-token-keyword: var(--accent);
+  --astro-code-token-parameter: var(--text);
+  --astro-code-token-function: var(--text);
+  --astro-code-token-string-expression: var(--success);
+  --astro-code-token-punctuation: var(--text-muted);
+  --astro-code-token-link: var(--accent);
+}

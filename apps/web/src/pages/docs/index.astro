@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="Docs" description="Panduan memakai workspace, sintaks payload, dan referensi dasar x86.">
+	<div class="mx-auto max-w-5xl px-5 py-16 md:py-24">
+		<h1 class="text-3xl font-semibold tracking-tight">Docs</h1>
+		<p class="mt-3 max-w-[56ch] text-muted">Panduan alat dan referensi singkat untuk dipakai sambil mengerjakan level.</p>
+		<ul class="mt-10 max-w-[68ch] border-t border-border">
+			{
+				docs.map((d) => (
+					<li class="border-b border-border">
+						<a href={`/docs/${d.id}`} class="block py-5 transition-colors hover:bg-surface">
+							<span class="font-medium">{d.data.title}</span>
+							<span class="mt-1 block text-muted">{d.data.description}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</BaseLayout>

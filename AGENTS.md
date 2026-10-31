@@ -40,3 +40,10 @@ Consult these guides before working on related tasks:
 - Lisensi: repo open source (dikonfirmasi user), sehingga GPL-2.0 Unicorn dapat diterima. Pilih lisensi kompatibel (GPL-2.0-or-later atau GPL-3.0) sebelum rilis.
 - Plan: Workers Free (dikonfirmasi user). Batas 10 ms CPU berlaku, jadi desain replay Fase 4 harus hemat.
 - Fase 0: replay di Worker wajib memakai instance Unicorn yang dipakai ulang, tanpa hook per instruksi, dan inisialisasi di global scope.
+- Fase 1: Astro dipindah ke `apps/web` (npm workspaces: `apps/*`, `packages/*`, `workers/*`). Jalankan perintah dari root (`npm run dev`, `build`, `check`).
+- Fase 1: variabel font di token dinamai `--font-family-sans` dan `--font-family-mono` (bukan `--font-sans`/`--font-mono`), karena `--font-sans: var(--font-sans)` di `@theme inline` menjadi referensi melingkar. Pemetaan Tailwind tetap `font-sans` dan `font-mono`.
+- Fase 1: warna kode memakai shiki `css-variables`, diturunkan dari token di `tokens.css`.
+- Fase 1: `/play` dan `/leaderboard` masih halaman stub statis. Tombol login dan avatar di header ditambahkan di Fase 3, saat `/auth/github` ada.
+- Fase 1: adapter Cloudflare menyebut binding `IMAGES` dan `SESSION` (KV) saat build, belum dideklarasikan di `wrangler.jsonc`. Putuskan di Fase 3 (sesi memakai D1, jadi kemungkinan dimatikan agar tidak membuat KV).
+- Fase 1: Lighthouse (a11y, best-practices, SEO) 100 di `/`, `/docs`, `/docs/memulai`, `/play`, `/leaderboard`, dan `/404` pada build produksi (`spike/probe/lh-all.mjs`, Chromium headless).
+- Shell terminal agent memakan backtick dan tanda dolar di heredoc. Tulis file yang memuatnya lewat `write_file` atau `edit_file`.

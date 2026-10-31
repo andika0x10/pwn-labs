@@ -1,0 +1,40 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+	const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+	return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry, docs } }));
+}
+
+const { entry, docs } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.description}>
+	<div class="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-12 px-5 py-16 md:py-20 lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-16">
+		<nav aria-label="Daftar docs" class="text-sm">
+			<ul class="flex flex-wrap gap-x-5 gap-y-2 lg:flex-col lg:gap-1">
+				{
+					docs.map((d) => (
+						<li>
+							<a
+								href={`/docs/${d.id}`}
+								aria-current={d.id === entry.id ? 'page' : undefined}
+								class="block rounded-base py-1 text-muted hover:text-fg aria-[current=page]:font-medium aria-[current=page]:text-fg"
+							>
+								{d.data.title}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+		<article class="min-w-0">
+			<h1 class="max-w-[24ch] text-3xl font-semibold tracking-tight">{entry.data.title}</h1>
+			<div class="prose-pwn mt-8">
+				<Content />
+			</div>
+		</article>
+	</div>
+</BaseLayout>

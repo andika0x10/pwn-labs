@@ -1,0 +1,28 @@
+---
+title: Memulai
+description: Gambaran alur bermain di pwn-labs dan apa yang tersedia di workspace.
+order: 1
+---
+
+pwn-labs terdiri dari world, dan tiap world berisi level yang dikerjakan berurutan. Satu level punya materi singkat dan satu challenge yang dijalankan langsung di browser.
+
+## Alur satu level
+
+1. Baca materi di kolom kiri.
+2. Tulis payload di workspace, lalu jalankan.
+3. Pantau register, stack, dan disassembly sampai paham apa yang terjadi.
+4. Kirim payload. Server menjalankannya ulang dan memberi flag jika berhasil.
+
+## Tanpa akun dan dengan akun
+
+Kamu bisa membaca materi dan menjalankan emulator tanpa masuk. Akun GitHub dibutuhkan untuk mengirim payload, menyimpan progress, dan tampil di leaderboard.
+
+## Format payload
+
+Payload ditulis sebagai ekspresi sederhana, misalnya:
+
+```python
+"A" * 64 + p32(0x08049196)
+```
+
+Fungsi yang didukung: `p32`, `p64`, `cyclic`, `cyclic_find`, `nop`, literal string dan bytes, serta `*` dan `+`. Halaman ini akan dilengkapi saat workspace selesai dibuat.
