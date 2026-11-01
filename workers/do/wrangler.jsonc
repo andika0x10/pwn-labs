@@ -11,5 +11,16 @@
       { "name": "LEVEL_SESSION", "class_name": "LevelSession" },
       { "name": "LEADERBOARD", "class_name": "Leaderboard" }
     ]
-  }
+	},
+	"env": {
+		"staging": {
+			"name": "pwn-labs-do-staging",
+			"durable_objects": {
+				"bindings": [
+					{ "name": "LEVEL_SESSION", "class_name": "LevelSession" },
+					{ "name": "LEADERBOARD", "class_name": "Leaderboard" }
+				]
+			}
+		}
+	}
 }

@@ -10,7 +10,13 @@ test('tamu dapat menjalankan payload level contoh', async ({ page }) => {
 });
 
 test('submit tamu diarahkan ke GitHub OAuth', async ({ page }) => {
+  await page.route('https://github.com/login/oauth/authorize**', (route) => route.abort());
   await page.goto('/play/example/example-01');
+  const oauthRequest = page.waitForRequest((request) => request.url().startsWith('https://github.com/login/oauth/authorize'));
   await page.getByRole('button', { name: 'Kirim jawaban' }).click();
-  await expect(page).toHaveURL(/\/auth\/github\?next=/);
+  const url = new URL((await oauthRequest).url());
+  expect(url.searchParams.get('redirect_uri')).toBe('http://localhost:4321/auth/github/callback');
+  expect(url.searchParams.get('state')).toHaveLength(40);
+  expect(url.searchParams.get('code_challenge')).toBeTruthy();
+  expect(url.searchParams.get('code_challenge_method')).toBe('S256');
 });

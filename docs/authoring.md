@@ -57,3 +57,22 @@ GCC dan `make` cukup untuk fixture saat ini. Template `.asm` membutuhkan NASM. J
 4. Hint dibuka dari umum ke spesifik.
 5. `draft` diubah menjadi `false` dan level diuji di mobile serta desktop.
 6. Pastikan tidak ada flag, secret, atau solution payload di aset publik.
+
+## Rilis
+
+Durable Object harus terbit sebelum web. Terapkan migrasi D1 untuk target yang sama, lalu jalankan:
+
+```sh
+npm run deploy:staging
+npm run deploy -w workers/do
+npm run deploy
+```
+
+Astro memilih environment Cloudflare saat build. Karena itu staging wajib memakai `CLOUDFLARE_ENV=staging`; flag `wrangler deploy --env staging` setelah build tidak cukup. Secret `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, dan `FLAG_SECRET` dipasang melalui Wrangler dan tidak disimpan di git.
+
+Callback OAuth:
+
+- staging: `https://pwn-labs-staging.andikadinata.workers.dev/auth/github/callback`
+- produksi: `https://pwn-labs.andikadinata.workers.dev/auth/github/callback`
+
+Setelah deploy, cek landing, dua level contoh, submit, leaderboard, profil, logout, serta fallback polling. Jika build menampilkan binding produksi ketika menargetkan staging, hapus artifact `dist`, build ulang dengan `CLOUDFLARE_ENV=staging`, dan periksa `dist/server/wrangler.json` sebelum deploy.

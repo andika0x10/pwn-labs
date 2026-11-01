@@ -33,6 +33,12 @@ Consult these guides before working on related tasks:
 | Resource | Nama | Dibuat dengan | Catatan |
 | --- | --- | --- | --- |
 | Worker (spike Fase 0) | `pwn-labs-spike` | `npx wrangler deploy` di `spike/worker` | Dihapus 2026-10-31 atas persetujuan user (`npx wrangler delete --name pwn-labs-spike --force`). |
+| Worker web (staging) | `pwn-labs-staging` | `CLOUDFLARE_ENV=staging npm run build` lalu `wrangler deploy` di `apps/web` | `https://pwn-labs-staging.andikadinata.workers.dev` |
+| Worker DO (staging) | `pwn-labs-do-staging` | `wrangler deploy --env staging` di `workers/do` | Durable Object `LevelSession` dan `Leaderboard`. |
+| D1 (staging) | `pwn-labs-db-staging` (`89e386cd-b644-43f1-8aba-436c35a06dd9`) | `npx wrangler d1 create pwn-labs-db-staging` | Database terpisah untuk smoke test staging. |
+| Worker web (produksi) | `pwn-labs` | `npm run build` lalu `wrangler deploy` di `apps/web` | `https://pwn-labs.andikadinata.workers.dev` |
+| Worker DO (produksi) | `pwn-labs-do` | `wrangler deploy` di `workers/do` | Durable Object `LevelSession` dan `Leaderboard`. |
+| D1 (produksi) | `pwn-labs-db` (`8c940c23-2970-40a3-95d6-b46b5860ac67`) | Sudah tersedia sebelum Fase 3 | Database produksi. |
 
 ## Keputusan
 

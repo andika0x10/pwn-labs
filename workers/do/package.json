@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "wrangler dev --config wrangler.jsonc",
     "deploy": "wrangler deploy --config wrangler.jsonc",
+    "deploy:staging": "wrangler deploy --env staging --config wrangler.jsonc",
     "generate-types": "wrangler types --config wrangler.jsonc"
   },
   "devDependencies": { "wrangler": "^4.156.0" }

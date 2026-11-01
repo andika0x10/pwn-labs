@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default [
-  { ignores: ['**/dist/**', '**/.astro/**', '**/node_modules/**', 'apps/web/public/emulator/**', 'apps/web/src/generated/**', 'apps/web/worker-configuration.d.ts', 'spike/**'] },
+  { ignores: ['**/dist/**', '**/.astro/**', '**/node_modules/**', 'apps/web/public/emulator/**', 'apps/web/src/generated/**', '**/worker-configuration.d.ts', 'spike/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...astro.configs.recommended,

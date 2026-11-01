@@ -27,5 +27,27 @@
 	},
 	"secrets": {
 		"required": ["GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "FLAG_SECRET"]
+	},
+	"env": {
+		"staging": {
+			"name": "pwn-labs-staging",
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "pwn-labs-db-staging",
+					"database_id": "89e386cd-b644-43f1-8aba-436c35a06dd9",
+					"migrations_dir": "../../migrations"
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{ "name": "LEVEL_SESSION", "class_name": "LevelSession", "script_name": "pwn-labs-do-staging" },
+					{ "name": "LEADERBOARD", "class_name": "Leaderboard", "script_name": "pwn-labs-do-staging" }
+				]
+			},
+			"secrets": {
+				"required": ["GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "FLAG_SECRET"]
+			}
+		}
 	}
 }
