@@ -1,0 +1,32 @@
+---
+id: example-01
+world: example
+order: 1
+title: Ubah return address
+description: Susun payload pertama dan arahkan program ke fungsi win.
+points: 100
+arch: x86-32
+binary: /binaries/example-01.bin
+source: /sources/example-01.c
+success:
+  type: output-contains
+  value: "WIN"
+symbols:
+  _start: 134512640
+  vuln: 134512657
+  win: 134512685
+hints:
+  - Buffer menampung 64 byte, lalu ada saved EBP sepanjang 4 byte.
+  - Alamat win adalah 0x0804802d dan harus ditulis little-endian.
+requires: []
+draft: false
+example: true
+---
+
+## Tujuan
+
+Uji workspace dengan membuat payload yang mengganti return address.
+
+## Tantangan
+
+Isi buffer dan saved EBP, lalu tambahkan alamat fungsi `win`. Jalankan payload untuk melihat perubahan stack sebelum mengirim jawaban.

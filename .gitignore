@@ -27,4 +27,9 @@ pnpm-debug.log*
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# generated emulator glue for the server bundle
+apps/web/src/generated/
+test-results/
+playwright-report/
 !.env.example

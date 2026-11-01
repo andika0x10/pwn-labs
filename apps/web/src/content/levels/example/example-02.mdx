@@ -1,0 +1,33 @@
+---
+id: example-02
+world: example
+order: 2
+title: Susun payload dengan p32
+description: Gunakan ekspresi payload agar byte alamat tidak perlu ditulis manual.
+points: 120
+arch: x86-32
+binary: /binaries/example-02.bin
+source: /sources/example-02.c
+success:
+  type: output-contains
+  value: "WIN"
+symbols:
+  _start: 134512640
+  vuln: 134512657
+  win: 134512685
+hints:
+  - Operator perkalian mengulang string atau bytes.
+  - Coba gabungkan 68 byte pengisi dengan p32(0x0804802d).
+requires:
+  - example-01
+draft: false
+example: true
+---
+
+## Tujuan
+
+Gunakan fungsi pembantu payload untuk menulis integer little-endian.
+
+## Tantangan
+
+Bangun payload yang sama secara ringkas dengan operasi pengulangan dan `p32`.

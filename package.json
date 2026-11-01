@@ -5,10 +5,28 @@
   "workspaces": ["apps/*", "packages/*", "workers/*"],
   "engines": { "node": ">=22.23.4" },
   "scripts": {
-    "dev": "npm run dev -w apps/web",
-    "build": "npm run build -w apps/web",
+    "dev": "npm run prepare:emulator && node --env-file=.dev.vars scripts/dev.mjs",
+    "build": "npm run prepare:emulator && npm run build -w apps/web",
     "preview": "npm run preview -w apps/web",
-    "check": "npm run check -w apps/web",
-    "deploy": "npm run deploy -w apps/web"
+    "check": "npm run prepare:emulator && npm run check -w apps/web",
+    "deploy": "npm run deploy -w apps/web",
+    "new:world": "node scripts/scaffold.mjs world",
+    "new:level": "node scripts/scaffold.mjs level",
+    "validate:content": "node scripts/validate-content.mjs",
+    "build:challenges": "node scripts/build-challenges.mjs",
+    "prepare:emulator": "node scripts/prepare-emulator.mjs",
+    "test:levels": "node scripts/test-levels.mjs",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.64.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-astro": "^1.5.0",
+    "globals": "^16.4.0",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^4.0.8"
   }
 }

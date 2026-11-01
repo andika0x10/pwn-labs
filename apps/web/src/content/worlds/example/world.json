@@ -1,0 +1,8 @@
+{
+  "id": "example",
+  "title": "Sandbox stack",
+  "description": "Dua level kecil untuk mengenal payload dan alur kerja workspace.",
+  "order": 1,
+  "draft": false,
+  "example": true
+}

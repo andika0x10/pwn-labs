@@ -1,0 +1,8 @@
+{
+  "id": "__WORLD__",
+  "title": "TODO",
+  "description": "TODO",
+  "order": __ORDER__,
+  "draft": true,
+  "example": false
+}
