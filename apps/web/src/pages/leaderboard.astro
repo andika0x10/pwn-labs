@@ -1,8 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Notice from '../components/Notice.astro';
+import Leaderboard from '../islands/Leaderboard';
+import { leaderboardRows } from '../lib/game';
+import { env } from 'cloudflare:workers';
+export const prerender = false;
+const rows = await leaderboardRows(env.DB);
 ---
 
-<BaseLayout title="Leaderboard">
-	<Notice title="Leaderboard" body="Peringkat muncul setelah level pertama bisa diselesaikan." />
+<BaseLayout title="Leaderboard" description="Peringkat pemain berdasarkan poin challenge yang telah diselesaikan.">
+	<div class="mx-auto max-w-4xl px-5 py-16 md:py-24">
+		<h1 class="text-3xl font-semibold tracking-tight">Leaderboard</h1>
+		<p class="mt-3 mb-10 max-w-[58ch] leading-7 text-muted">Poin berasal dari level yang berhasil diverifikasi. Membuka hint mengurangi nilai level, bukan kesempatan belajar.</p>
+		<Leaderboard client:load initial={rows} currentUser={Astro.locals.user?.username} />
+	</div>
 </BaseLayout>

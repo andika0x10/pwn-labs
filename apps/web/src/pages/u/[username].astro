@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { env } from 'cloudflare:workers';
+export const prerender = false;
+const profile = await env.DB.prepare('SELECT id, username, avatar_url AS avatarUrl, created_at AS createdAt FROM users WHERE username = ?').bind(Astro.params.username).first<{ id: string; username: string; avatarUrl: string | null; createdAt: number }>();
+if (!profile) return Astro.redirect('/404');
+const progress = await env.DB.prepare('SELECT level_id AS levelId, points, solved_at AS solvedAt FROM progress WHERE user_id = ? ORDER BY solved_at DESC').bind(profile.id).all<{ levelId: string; points: number; solvedAt: number }>();
+const total = progress.results.reduce((sum, row) => sum + row.points, 0);
+---
+<BaseLayout title={profile.username} description={`Profil pwn-labs ${profile.username}`}>
+	<div class="mx-auto max-w-3xl px-5 py-16 md:py-24">
+		<div class="flex items-center gap-5">{profile.avatarUrl && <img src={profile.avatarUrl} alt="" class="h-16 w-16 rounded-full" />}<div><h1 class="text-3xl font-semibold tracking-tight">{profile.username}</h1><p class="mt-1 text-muted">{total} poin · {progress.results.length} level selesai</p></div></div>
+		<h2 class="mt-12 text-xl font-medium">Level selesai</h2>
+		<ul class="mt-5 border-t border-border">{progress.results.map((row) => <li class="flex justify-between border-b border-border py-4"><span>{row.levelId}</span><span class="font-mono text-sm text-muted">{row.points} poin</span></li>)}</ul>
+	</div>
+</BaseLayout>

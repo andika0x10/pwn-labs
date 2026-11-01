@@ -8,7 +8,24 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "pwn-labs-db",
+			"database_id": "8c940c23-2970-40a3-95d6-b46b5860ac67",
+			"migrations_dir": "../../migrations"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "LEVEL_SESSION", "class_name": "LevelSession", "script_name": "pwn-labs-do" },
+			{ "name": "LEADERBOARD", "class_name": "Leaderboard", "script_name": "pwn-labs-do" }
+		]
+	},
 	"observability": {
 		"enabled": true
+	},
+	"secrets": {
+		"required": ["GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "FLAG_SECRET"]
 	}
 }

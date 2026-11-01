@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AccountActions from '../islands/AccountActions';
+import { env } from 'cloudflare:workers';
+export const prerender = false;
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/auth/github?next=/me');
+const progress = await env.DB.prepare('SELECT level_id AS levelId, points, solved_at AS solvedAt FROM progress WHERE user_id = ? ORDER BY solved_at DESC').bind(user.id).all<{ levelId: string; points: number; solvedAt: number }>();
+const total = progress.results.reduce((sum, row) => sum + row.points, 0);
+---
+<BaseLayout title="Akun saya">
+	<div class="mx-auto max-w-3xl px-5 py-16 md:py-24">
+		<div class="flex items-center gap-5">{user.avatarUrl && <img src={user.avatarUrl} alt="" class="h-16 w-16 rounded-full" />}<div><h1 class="text-3xl font-semibold tracking-tight">{user.username}</h1><p class="mt-1 text-muted">{total} poin · {progress.results.length} level selesai</p></div></div>
+		<h2 class="mt-12 text-xl font-medium">Progress</h2>
+		<ul class="mt-5 border-t border-border">{progress.results.length ? progress.results.map((row) => <li class="flex justify-between border-b border-border py-4"><a href={`/play/example/${row.levelId}`} class="font-medium hover:text-accent">{row.levelId}</a><span class="font-mono text-sm text-muted">{row.points} poin</span></li>) : <li class="border-b border-border py-5 text-muted">Belum ada level yang selesai. Mulai dari sandbox.</li>}</ul>
+		<form method="post" action="/auth/logout" class="mt-8"><button class="rounded-base border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface">Keluar</button></form>
+		<AccountActions client:load />
+	</div>
+</BaseLayout>

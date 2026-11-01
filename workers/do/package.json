@@ -1,0 +1,11 @@
+{
+  "name": "@pwn-labs/durable-objects",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.jsonc",
+    "deploy": "wrangler deploy --config wrangler.jsonc",
+    "generate-types": "wrangler types --config wrangler.jsonc"
+  },
+  "devDependencies": { "wrangler": "^4.156.0" }
+}
