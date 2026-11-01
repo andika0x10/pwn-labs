@@ -1,0 +1,36 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Workspace from '../../../islands/Workspace';
+import { findLevel, getPublishedLevels } from '../../../lib/content';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+const worldId = Astro.params.world!;
+const levelId = Astro.params.level!;
+const level = await findLevel(worldId, levelId);
+if (!level) return Astro.redirect('/404');
+const user = Astro.locals.user;
+if (user && level.data.requires.length) {
+  const result = await env.DB.prepare('SELECT level_id FROM progress WHERE user_id = ?').bind(user.id).all<{ level_id: string }>();
+  const solved = new Set(result.results.map((row) => row.level_id));
+  if (level.data.requires.some((id) => !solved.has(id))) return Astro.redirect(`/play/${worldId}?locked=1`);
+}
+const allLevels = (await getPublishedLevels()).filter((entry) => entry.data.world === worldId);
+const next = allLevels.find((entry) => entry.data.order === level.data.order + 1);
+const { Content } = await render(level);
+const source = `void win(void) { write(1, "WIN\\n", 4); exit(0); }\n\nvoid vuln(void) {\n  char buffer[64];\n  read(0, buffer, 256);\n}`;
+---
+
+<BaseLayout title={level.data.title} description={level.data.description}>
+	<div class="mx-auto max-w-7xl px-5 py-10 md:py-14">
+		<div class="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
+			<div><a href={`/play/${worldId}`} class="text-sm text-muted underline underline-offset-4">Kembali ke world</a><h1 class="mt-3 text-3xl font-semibold tracking-tight">{level.data.title}</h1></div>
+			<p class="text-sm text-muted">{level.data.arch} · {level.data.points} poin</p>
+		</div>
+		<div class="grid gap-10 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(32rem,1.28fr)] lg:items-start">
+			<article class="min-w-0"><div class="prose-pwn"><Content /></div>{next && <a href={`/play/${worldId}/${next.data.id}`} class="mt-10 inline-block text-sm text-accent underline underline-offset-4">Level berikutnya: {next.data.title}</a>}</article>
+			<div class="min-w-0 lg:sticky lg:top-5"><Workspace client:load levelId={level.data.id} source={source} winAddress={level.data.symbols.win ?? 0x0804802d} authenticated={!!user} hints={level.data.hints} /></div>
+		</div>
+	</div>
+</BaseLayout>

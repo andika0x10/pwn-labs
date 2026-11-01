@@ -2,6 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import StackDiagram from '../components/StackDiagram.astro';
 
+export const prerender = true;
+
 const steps = [
 	{ title: 'Baca materi', body: 'Tiap level dibuka dengan penjelasan singkat tentang satu konsep, tanpa teori berlebih.' },
 	{

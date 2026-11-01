@@ -6,7 +6,9 @@
     "./worker-configuration.d.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "public/emulator",
+    "src/generated"
 ],
 "compilerOptions": {
     "types": [

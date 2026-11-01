@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getPublishedLevels, getPublishedWorlds } from '../../../lib/content';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+const worldId = Astro.params.world!;
+const world = (await getPublishedWorlds()).find((entry) => entry.data.id === worldId);
+if (!world) return Astro.redirect('/404');
+const levels = (await getPublishedLevels()).filter((entry) => entry.data.world === worldId);
+const user = Astro.locals.user;
+const solved = new Set<string>();
+if (user) {
+  const result = await env.DB.prepare('SELECT level_id FROM progress WHERE user_id = ?').bind(user.id).all<{ level_id: string }>();
+  result.results.forEach((row) => solved.add(row.level_id));
+}
+const lockedMessage = Astro.url.searchParams.get('locked') === '1';
+---
+
+<BaseLayout title={world.data.title} description={world.data.description}>
+	<div class="mx-auto max-w-4xl px-5 py-16 md:py-24">
+		<a href="/play" class="text-sm text-muted underline underline-offset-4">Semua world</a>
+		<h1 class="mt-6 text-3xl font-semibold tracking-tight">{world.data.title}</h1>
+		<p class="mt-3 max-w-[60ch] leading-7 text-muted">{world.data.description}</p>
+		{lockedMessage && <p class="mt-6 rounded-base border border-danger/30 bg-danger/5 p-4 text-sm text-danger">Selesaikan level prasyarat sebelum membuka level ini.</p>}
+		<ol class="mt-12 border-t border-border">
+			{levels.map((level, index) => {
+				const locked = !!user && level.data.requires.some((id) => !solved.has(id));
+				const complete = solved.has(level.data.id);
+				return <li class="grid grid-cols-[2.5rem_1fr_auto] items-start gap-4 border-b border-border py-6">
+					<span class={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-xs ${complete ? 'border-success text-success' : locked ? 'border-border text-muted' : 'border-accent text-accent'}`}>{complete ? '✓' : index + 1}</span>
+					<div><h2 class="font-medium">{level.data.title}</h2><p class="mt-1 max-w-[52ch] leading-6 text-muted">{level.data.description}</p><p class="mt-2 text-sm text-muted">{level.data.points} poin</p></div>
+					{locked ? <span class="text-sm text-muted">Terkunci</span> : <a href={`/play/${worldId}/${level.data.id}`} class="rounded-base border border-border px-4 py-2 text-sm font-medium hover:bg-surface">Buka</a>}
+				</li>;
+			})}
+		</ol>
+	</div>
+</BaseLayout>

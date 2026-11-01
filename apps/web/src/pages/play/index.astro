@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublishedLevels, getPublishedWorlds } from '../../lib/content';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+const worlds = await getPublishedWorlds();
+const levels = await getPublishedLevels();
+const user = Astro.locals.user;
+const solved = new Set<string>();
+if (user) {
+  const rows = await env.DB.prepare('SELECT level_id FROM progress WHERE user_id = ?').bind(user.id).all<{ level_id: string }>();
+  for (const row of rows.results) solved.add(row.level_id);
+}
+---
+
+<BaseLayout title="Play" description="Pilih world dan mulai menjalankan challenge binary exploitation di browser.">
+	<div class="mx-auto max-w-5xl px-5 py-16 md:py-24">
+		<h1 class="text-3xl font-semibold tracking-tight">Pilih jalur belajar</h1>
+		<p class="mt-3 max-w-[60ch] leading-7 text-muted">Setiap level mengajarkan satu perubahan kecil pada memori. Kamu dapat mencoba semuanya tanpa akun; masuk untuk menyimpan penyelesaian dan poin.</p>
+		<ul class="mt-12 border-t border-border">
+			{worlds.map((world) => {
+				const items = levels.filter((level) => level.data.world === world.data.id);
+				const done = items.filter((level) => solved.has(level.data.id)).length;
+				return <li class="grid gap-5 border-b border-border py-7 md:grid-cols-[12rem_1fr_auto] md:items-start md:gap-8">
+					<div><h2 class="text-xl font-medium">{world.data.title}</h2><p class="mt-1 text-sm text-muted">{done}/{items.length} selesai</p></div>
+					<p class="max-w-[52ch] leading-7 text-muted">{world.data.description}</p>
+					<a href={`/play/${world.data.id}`} class="rounded-base border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface">Buka world</a>
+				</li>;
+			})}
+		</ul>
+	</div>
+</BaseLayout>
