@@ -23,14 +23,61 @@ const source = `void win(void) { write(1, "WIN\\n", 4); exit(0); }\n\nvoid vuln(
 ---
 
 <BaseLayout title={level.data.title} description={level.data.description}>
-	<div class="mx-auto max-w-7xl px-5 py-10 md:py-14">
+	<div class="mx-auto max-w-7xl px-4 py-6 sm:px-5 md:py-14" data-level-layout>
 		<div class="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
 			<div><a href={`/play/${worldId}`} class="text-sm text-muted underline underline-offset-4">Kembali ke world</a><h1 class="mt-3 text-3xl font-semibold tracking-tight">{level.data.title}</h1></div>
 			<p class="text-sm text-muted">{level.data.arch} · {level.data.points} poin</p>
 		</div>
+		<div class="level-tabs sticky top-0 z-20 mb-6 grid grid-cols-2 border-b border-border bg-bg lg:hidden" role="tablist" aria-label="Tampilan level">
+			<button id="tab-materi" type="button" role="tab" aria-selected="true" aria-controls="panel-materi" class="min-h-12 border-b-2 border-accent px-4 text-sm font-medium text-accent">Materi</button>
+			<button id="tab-workspace" type="button" role="tab" aria-selected="false" aria-controls="panel-workspace" tabindex="-1" class="min-h-12 border-b-2 border-transparent px-4 text-sm font-medium text-muted">Workspace</button>
+		</div>
 		<div class="grid gap-10 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(32rem,1.28fr)] lg:items-start">
-			<article class="min-w-0"><div class="prose-pwn"><Content /></div>{next && <a href={`/play/${worldId}/${next.data.id}`} class="mt-10 inline-block text-sm text-accent underline underline-offset-4">Level berikutnya: {next.data.title}</a>}</article>
-			<div class="min-w-0 lg:sticky lg:top-5"><Workspace client:load levelId={level.data.id} source={source} winAddress={level.data.symbols.win ?? 0x0804802d} authenticated={!!user} hints={level.data.hints} /></div>
+			<article id="panel-materi" class="level-panel min-w-0" role="tabpanel" aria-labelledby="tab-materi"><div class="prose-pwn"><Content /></div><button type="button" data-open-workspace class="mt-6 min-h-12 rounded-base bg-accent px-5 text-sm font-medium text-bg lg:hidden">Buka workspace</button>{next && <a href={`/play/${worldId}/${next.data.id}`} class="mt-6 block py-3 text-sm text-accent underline underline-offset-4">Level berikutnya: {next.data.title}</a>}</article>
+			<div id="panel-workspace" class="level-panel min-w-0 lg:sticky lg:top-5" role="tabpanel" aria-labelledby="tab-workspace"><Workspace client:load levelId={level.data.id} source={source} winAddress={level.data.symbols.win ?? 0x0804802d} authenticated={!!user} hints={level.data.hints} /></div>
 		</div>
 	</div>
 </BaseLayout>
+
+<style>
+	.level-tabs { display: none; }
+	@media (max-width: 63.999rem) {
+		[data-level-layout][data-mobile-panel] .level-tabs { display: grid; }
+		[data-mobile-panel='materi'] #panel-workspace,
+		[data-mobile-panel='workspace'] #panel-materi { display: none; }
+	}
+</style>
+
+<script>
+	const layout = document.querySelector<HTMLElement>('[data-level-layout]');
+	if (layout) {
+		const tabs = Array.from(layout.querySelectorAll<HTMLButtonElement>('.level-tabs [role="tab"]'));
+		function selectPanel(index: number, focus = false) {
+			layout!.dataset.mobilePanel = index === 0 ? 'materi' : 'workspace';
+			tabs.forEach((tab, current) => {
+				const selected = current === index;
+				tab.setAttribute('aria-selected', String(selected));
+				tab.tabIndex = selected ? 0 : -1;
+				tab.classList.toggle('border-accent', selected);
+				tab.classList.toggle('text-accent', selected);
+				tab.classList.toggle('border-transparent', !selected);
+				tab.classList.toggle('text-muted', !selected);
+			});
+			if (focus) tabs[index]?.focus();
+		}
+		selectPanel(0);
+		tabs.forEach((tab, index) => {
+			tab.addEventListener('click', () => selectPanel(index));
+			tab.addEventListener('keydown', (event) => {
+				if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+					event.preventDefault();
+					selectPanel(event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - index, true);
+				}
+			});
+		});
+		layout.querySelector('[data-open-workspace]')?.addEventListener('click', () => {
+			selectPanel(1, true);
+			tabs[1]?.scrollIntoView({ block: 'start' });
+		});
+	}
+</script>

@@ -39,6 +39,10 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
   useEffect(() => {
     const instance = new Worker('/emulator/worker.js');
     worker.current = instance;
+    instance.onerror = () => {
+      setStatus('Emulator gagal dimuat. Periksa koneksi lalu muat ulang halaman.');
+      pending.current.clear();
+    };
     instance.onmessage = (event: MessageEvent<EmulatorResponse>) => {
       const response = event.data;
       if (response.ok) pending.current.get(response.id)?.(response.data);
@@ -88,14 +92,20 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
     setFlag(body.data!.flag); setStatus('Selesai. Flag dan poin sudah disimpan.');
   }
 
-  return <section className="overflow-hidden rounded-base border border-border bg-bg" aria-label="Workspace challenge">
+  return <section className="overflow-hidden rounded-base border border-border bg-bg pb-24 lg:pb-0" aria-label="Workspace challenge">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3">
-      <div className="flex gap-1" role="tablist" aria-label="Panel workspace">
-        {tabs.map((tab) => <button key={tab} type="button" role="tab" aria-selected={active === tab} onClick={() => setActive(tab)} className={`rounded-base px-3 py-2 text-sm ${active === tab ? 'bg-bg font-medium text-fg' : 'text-muted hover:text-fg'}`}>{tab}</button>)}
+      <div className="grid w-full grid-cols-2 gap-1 sm:flex sm:w-auto" role="tablist" aria-label="Panel workspace">
+        {tabs.map((tab, index) => <button key={tab} id={`debug-tab-${tab}`} type="button" role="tab" aria-controls="debug-panel" tabIndex={active === tab ? 0 : -1} aria-selected={active === tab} onClick={() => setActive(tab)} onKeyDown={(event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+          setActive(tabs[next]);
+          document.getElementById(`debug-tab-${tabs[next]}`)?.focus();
+        }} className={`min-h-11 rounded-base px-3 py-2 text-sm ${active === tab ? 'bg-bg font-medium text-fg' : 'text-muted hover:text-fg'}`}>{tab}</button>)}
       </div>
       <span className="text-sm text-muted" aria-live="polite">{status}</span>
     </div>
-    <div className="h-[22rem] overflow-auto p-4 font-mono text-sm">
+    <div id="debug-panel" role="tabpanel" aria-labelledby={`debug-tab-${active}`} tabIndex={0} className="h-64 overflow-auto overscroll-contain p-2 font-mono text-sm sm:h-[22rem] sm:p-4">
       {active === 'Disassembly' && (instructions.length ? <table className="w-full border-collapse"><tbody>{instructions.map(([address, instruction]) => <tr key={address} className={snapshot?.registers.eip === address ? 'bg-accent/5 text-accent' : ''}><td className="w-32 border-l-2 border-transparent px-3 py-2 text-muted">0x{address.toString(16)}</td><td className="px-3 py-2">{instruction}</td></tr>)}</tbody></table> : <p className="text-muted">Memuat Capstone…</p>)}
       {active === 'Stack' && <table className="w-full border-collapse"><tbody>{(snapshot?.stack ?? []).map((row) => <tr key={row.address} className={row.role === 'return address' ? 'bg-accent/5' : ''}><td className="border-b border-border px-3 py-2 text-muted">0x{row.address.toString(16)}</td><td className="border-b border-border px-3 py-2">{row.bytes}</td><td className="border-b border-border px-3 py-2 text-muted">{row.role}</td></tr>)}</tbody></table>}
       {active === 'Registers' && <dl className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border sm:grid-cols-4">{Object.entries(snapshot?.registers ?? {}).map(([name, value]) => <div key={name} className="bg-bg p-3"><dt className="text-muted">{name}</dt><dd className="mt-1">0x{value.toString(16).padStart(8, '0')}</dd></div>)}</dl>}
@@ -103,19 +113,21 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
     </div>
     <div className="border-t border-border p-4">
       <label htmlFor="payload" className="text-sm font-medium">Payload</label>
-      <textarea id="payload" value={expression} onChange={(event) => setExpression(event.target.value)} spellCheck={false} className="mt-2 min-h-24 w-full resize-y rounded-base border border-border bg-surface p-3 font-mono text-sm leading-6" />
+      <textarea id="payload" value={expression} onChange={(event) => setExpression(event.target.value)} spellCheck={false} autoCapitalize="off" autoCorrect="off" className="mt-2 min-h-28 w-full resize-y rounded-base border border-border bg-surface p-3 font-mono text-base leading-6 sm:text-sm" />
       {parsed.error ? <p className="mt-2 text-sm text-danger">{parsed.error}</p> : <p className="mt-2 break-all font-mono text-xs leading-5 text-muted">{parsed.bytes.length} byte · {toHex(parsed.bytes)}</p>}
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" disabled={!!parsed.error} onClick={() => execute('run')} className="rounded-base bg-accent px-4 py-2.5 text-sm font-medium text-bg disabled:opacity-50">Jalankan</button>
-        <button type="button" onClick={() => execute('step')} className="rounded-base border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface">Step</button>
-        <button type="button" disabled={!!parsed.error} onClick={() => execute('continue')} className="rounded-base border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface">Continue</button>
-        <button type="button" disabled={!!parsed.error} onClick={submit} className="ml-auto rounded-base border border-accent px-4 py-2.5 text-sm font-medium text-accent hover:bg-accent/5">Kirim jawaban</button>
+        <button type="button" disabled={!snapshot || !!parsed.error} onClick={() => execute('step')} className="min-h-11 rounded-base border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface disabled:opacity-50">Step</button>
+        <button type="button" disabled={!snapshot || !!parsed.error} onClick={() => execute('continue')} className="min-h-11 rounded-base border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface disabled:opacity-50">Continue</button>
+      </div>
+      <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-3 border-t border-border bg-bg px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:static lg:mt-4 lg:flex lg:border-0 lg:p-0">
+        <button type="button" disabled={!snapshot || !!parsed.error} onClick={() => execute('run')} className="min-h-12 rounded-base bg-accent px-4 py-2.5 text-sm font-medium text-bg disabled:opacity-50">Jalankan</button>
+        <button type="button" disabled={!snapshot || !!parsed.error} onClick={submit} className="min-h-12 rounded-base border border-accent px-4 py-2.5 text-sm font-medium text-accent hover:bg-accent/5 disabled:opacity-50 lg:ml-auto">Kirim jawaban</button>
       </div>
       <div className="mt-5 border-t border-border pt-4">
-        {revealed < hints.length && <button type="button" onClick={revealHint} className="text-sm text-accent underline underline-offset-4">Buka hint {revealed + 1}</button>}
+        {revealed < hints.length && <button type="button" onClick={revealHint} className="min-h-11 py-2 text-sm text-accent underline underline-offset-4">Buka hint {revealed + 1}</button>}
         {hints.slice(0, revealed).map((hint, index) => <p key={hint} className="mt-3 text-sm leading-6 text-muted"><span className="text-fg">Hint {index + 1}:</span> {hint}</p>)}
       </div>
-      {snapshot?.stdout && <pre className="mt-4 rounded-base bg-surface p-3 font-mono text-sm" aria-label="Output terminal">{snapshot.stdout}</pre>}
+      {snapshot?.stdout && <pre className="mt-4 overflow-x-auto rounded-base bg-surface p-3 font-mono text-sm" aria-label="Output terminal">{snapshot.stdout}</pre>}
       {flag && <p className="mt-4 break-all rounded-base border border-success/30 bg-success/5 p-3 font-mono text-sm text-success">{flag}</p>}
     </div>
   </section>;
