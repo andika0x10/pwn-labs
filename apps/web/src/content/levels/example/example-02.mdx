@@ -26,8 +26,13 @@ example: true
 
 ## Tujuan
 
-Gunakan fungsi pembantu payload untuk menulis integer little-endian.
+Pelajari `p32`, pembantu yang mengubah angka menjadi 4 byte. Urutan **little-endian** menempatkan byte bernilai paling rendah lebih dahulu, sesuai cara program x86 ini membaca alamat.
 
 ## Tantangan
 
-Bangun payload yang sama secara ringkas dengan operasi pengulangan dan `p32`.
+1. **Pahami.** Baca kode sumber dan temukan fungsi tujuan `win`.
+2. **Susun.** Pelajari contoh lengkap yang sudah diisi: `"A" * 68 + p32(0x0804802d)`. Payload adalah data masukan Anda. Pada contoh ini, 64 byte mengisi buffer (penampung masukan), 4 byte mengisi saved EBP (penunjuk stack yang disimpan), lalu 4 byte mengganti return address (alamat kembali) dengan alamat `win`.
+3. **Uji.** Pilih **Uji payload** dan periksa keluaran `WIN`. Coba ubah jumlah pengulangan untuk melihat pengaruhnya, lalu kembalikan hingga uji berhasil.
+4. **Kirim.** Pilih **Kirim jawaban** untuk pemeriksaan server dan penyimpanan poin. Jika diminta masuk, payload tersimpan di tab yang sama; uji ulang setelah kembali.
+
+Gunakan **Lihat petunjuk** jika perlu bantuan. Bilangan `0x0804802d` adalah alamat fungsi `win` untuk contoh ini; `p32` menyusunnya menjadi byte `2d 80 04 08`.

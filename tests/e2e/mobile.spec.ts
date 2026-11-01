@@ -10,21 +10,21 @@ test.describe('penggunaan di HP', () => {
     await page.getByRole('button', { name: 'Buka workspace' }).tap();
     await expect(page.getByRole('tabpanel', { name: 'Materi', exact: true })).toBeHidden();
     await expect(page.getByRole('tab', { name: 'Workspace', exact: true })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByText('Siap dijalankan.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Siap diuji. Baca kode sumber, lalu periksa payload Anda.')).toBeVisible({ timeout: 30_000 });
 
-    for (const name of ['Stack', 'Registers', 'Source', 'Disassembly']) {
+    for (const name of ['Memori stack', 'Register CPU', 'Kode sumber', 'Instruksi mesin']) {
       await page.getByRole('tab', { name, exact: true }).tap();
       await expect(page.getByRole('tabpanel', { name, exact: true })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
 
     await page.getByLabel('Payload', { exact: true }).fill('"A" * 68 + p32(0x0804802d)');
-    const run = page.getByRole('button', { name: 'Jalankan', exact: true });
+    const run = page.getByRole('button', { name: 'Uji payload', exact: true });
     const bounds = await run.boundingBox();
     expect(bounds!.height).toBeGreaterThanOrEqual(44);
     expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(812);
     await run.tap();
-    await expect(page.getByText('Program mencapai fungsi win.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Uji berhasil: program mencapai win. Kirim jawaban untuk diperiksa server dan menyimpan poin.')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByLabel('Output terminal')).toContainText('WIN');
 
     await page.getByRole('tab', { name: 'Materi', exact: true }).tap();
