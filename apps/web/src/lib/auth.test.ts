@@ -3,7 +3,7 @@ import { isInternalPath, sha256 } from './auth';
 
 describe('auth helpers', () => {
   it('hanya menerima redirect internal', () => {
-    expect(isInternalPath('/play/example')).toBe(true);
+    expect(isInternalPath('/play/stack')).toBe(true);
     expect(isInternalPath('//example.com')).toBe(false);
     expect(isInternalPath('/\\example.com')).toBe(false);
   });

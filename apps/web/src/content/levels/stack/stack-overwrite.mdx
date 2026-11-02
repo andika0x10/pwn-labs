@@ -1,0 +1,58 @@
+---
+id: stack-overwrite
+world: stack
+order: 1
+title: Ubah Status
+description: Lewati batas buffer dan ubah status yang tersimpan tepat di sebelahnya.
+points: 100
+arch: x86-32
+binary: /binaries/stack-overwrite.bin
+source: /sources/stack-overwrite.c
+success:
+  type: output-contains
+  value: STACK_STATUS_OK
+symbols:
+  _start: 134512640
+  failure: 134512645
+  message: 134512728
+  message_end: 134512744
+  vuln: 134512657
+  win: 134512697
+hints:
+  - Perhatikan urutan buffer dan status dalam struct pada kode sumber.
+  - Status berada tepat sesudah 24 byte buffer. Masukan sepanjang buffer saja
+    belum menyentuhnya.
+  - Tambahkan byte bukan nol setelah pengisi buffer. Anda tidak perlu mengubah
+    alamat kembali.
+requires: []
+draft: false
+example: false
+---
+
+## Tujuan
+
+Lewati batas buffer dan ubah status yang tersimpan tepat di sebelahnya.
+
+## Konsep
+
+Sebuah buffer memiliki kapasitas tetap, tetapi operasi `read` menerima jumlah byte yang diminta program. Jika jumlah itu terlalu besar, byte berikutnya menimpa data di alamat yang lebih tinggi. Ini disebut **buffer overflow**.
+
+Pada program ini, buffer dan status ditempatkan berurutan seperti sebuah struct C. Status awalnya nol. Program hanya membuka akses ketika status berubah menjadi bukan nol. Anda belum perlu mengubah alur eksekusi atau mencari alamat fungsi.
+
+## Panduan alat
+
+Baca ukuran buffer dan batas `read` pada tab **Kode sumber**. Coba masukan pendek, lalu periksa **Memori stack** setelah menjalankan payload. Setiap baris menampilkan empat byte pada alamat yang tertera; `41` adalah byte ASCII untuk huruf A.
+
+Ekspresi `"B" * 8` menghasilkan delapan byte B. Ubah panjang masukan sedikit demi sedikit dan bandingkan isi memori. Masukan tidak diakhiri byte nol secara otomatis.
+
+## Tantangan
+
+Buat status berubah dari nol menjadi bukan nol. Program harus mencetak `STACK_STATUS_OK`. Pembacaan dibatasi sampai akhir variabel status; return address tidak dapat ditimpa pada soal ini.
+
+Pilih **Uji payload** untuk menjalankan masukan di browser. Setelah berhasil, **Kirim jawaban** meminta verifikasi server dan menyimpan progress. Masuk dengan GitHub diperlukan untuk mengirim jawaban.
+
+Petunjuk dapat dibuka satu per satu. Untuk akun yang masuk, setiap petunjuk mengurangi poin sesuai aturan yang ditampilkan di panduan.
+
+## Source latihan
+
+Tab **Kode sumber** menampilkan representasi konsep C. Binary dibuat dari [assembly GNU](/sources/stack-overwrite.S); layout stack mengikuti assembly tersebut, bukan hasil kompilasi C. Anda juga dapat mengunduh [binary latihan](/binaries/stack-overwrite.bin).

@@ -17,6 +17,8 @@ function concat(left: Uint8Array, right: Uint8Array) {
 }
 
 function cyclic(length: number) {
+  if (!Number.isInteger(length) || length < 0 || length > MAX_PAYLOAD) throw new PayloadSyntaxError('Panjang cyclic harus 0–4096', 0);
+  if (length === 0) return new Uint8Array();
   const alphabet = 'abcdefghijklmnopqrstuvwxyz';
   let value = '';
   outer: for (const a of alphabet) for (const b of alphabet) for (const c of alphabet) {
@@ -79,7 +81,11 @@ export function parsePayload(input: string, symbols: Record<string, Uint8Array> 
     if (ident === 'p32') return bytes(4, value);
     if (ident === 'p64') return bytes(8, value);
     if (ident === 'cyclic') return cyclic(value);
-    if (ident === 'cyclic_find') return bytes(4, Math.max(0, new TextDecoder().decode(cyclic(MAX_PAYLOAD)).indexOf(new TextDecoder().decode(bytes(4, value)))));
+    if (ident === 'cyclic_find') {
+      const offset = new TextDecoder().decode(cyclic(MAX_PAYLOAD)).indexOf(new TextDecoder().decode(bytes(4, value)));
+      if (offset < 0) return error('Nilai tidak ditemukan dalam pola cyclic');
+      return bytes(4, offset);
+    }
     return error(`Fungsi ${ident} tidak dikenal`);
   };
   const product = () => {

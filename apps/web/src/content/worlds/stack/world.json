@@ -1,0 +1,8 @@
+{
+  "id": "stack",
+  "title": "Stack Dasar",
+  "description": "Lima tantangan bertahap: dari overwrite variabel sampai ret2win dengan argumen. Kenali C dasar; pelajari alat dan konsep pwn selama bermain.",
+  "order": 1,
+  "draft": false,
+  "example": false
+}

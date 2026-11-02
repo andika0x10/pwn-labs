@@ -7,7 +7,7 @@ await mkdir(output, { recursive: true });
 for (const name of ['unicorn_x86.wasm', 'unicorn_x86.glue.cjs', 'tramp_vii.wasm', 'tramp_viii.wasm', 'tramp_vijii.wasm', 'tramp_viijiji.wasm', 'tramp_iiijiji.wasm']) {
   await copyFile(path.join(root, 'spike/wasm', name), path.join(output, name));
 }
-await copyFile(path.join(root, 'spike/core.mjs'), path.join(output, 'core.mjs'));
+await copyFile(path.join(root, 'packages/emulator-core/core.mjs'), path.join(output, 'core.mjs'));
 const generated = path.join(root, 'apps/web/src/generated');
 await mkdir(generated, { recursive: true });
 const glue = await readFile(path.join(root, 'spike/wasm/unicorn_x86.glue.cjs'), 'utf8');

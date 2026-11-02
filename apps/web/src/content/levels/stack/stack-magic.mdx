@@ -1,0 +1,59 @@
+---
+id: stack-magic
+world: stack
+order: 2
+title: Kunci Empat Byte
+description: Susun nilai 32-bit yang tepat untuk membuka kunci program.
+points: 150
+arch: x86-32
+binary: /binaries/stack-magic.bin
+source: /sources/stack-magic.c
+success:
+  type: output-contains
+  value: STACK_MAGIC_OK
+symbols:
+  _start: 134512640
+  failure: 134512645
+  message: 134512731
+  message_end: 134512746
+  vuln: 134512657
+  win: 134512700
+hints:
+  - Berbeda dari soal pertama, status bukan nol saja tidak cukup. Baca
+    perbandingan nilai kunci.
+  - Variabel kunci berada sesudah 36 byte buffer dan harus bernilai 0x6b657931.
+  - Gunakan p32 untuk menyusun nilai kunci little-endian setelah pengisi buffer;
+    nilai yang sama dalam big-endian akan gagal.
+requires:
+  - stack-overwrite
+draft: false
+example: false
+---
+
+## Tujuan
+
+Susun nilai 32-bit yang tepat untuk membuka kunci program.
+
+## Konsep
+
+Integer 32-bit menempati empat byte. Pada x86, urutannya **little-endian**: byte dengan nilai paling rendah berada pada alamat paling rendah. Sebagai contoh terpisah, angka `0x11223344` disimpan sebagai `44 33 22 11`.
+
+Pembantu `p32(angka)` mengubah angka menjadi empat byte little-endian. Menulis teks angka heksadesimal menghasilkan karakter ASCII, bukan representasi integer tersebut. Kunci soal ini adalah `0x6b657931`; program memeriksa seluruh empat byte.
+
+## Panduan alat
+
+Temukan buffer dan kunci pada representasi C. Jalankan masukan pendek terlebih dahulu. Gunakan pratinjau **Lihat byte heksadesimal** untuk memeriksa byte hasil ekspresi sebelum menjalankannya.
+
+Sesudah uji, bandingkan empat byte setelah buffer pada panel **Memori stack** dengan nilai yang diminta. Alamat dan isi byte adalah dua hal berbeda: Anda sedang mengubah sebuah nilai, bukan menulis alamat fungsi.
+
+## Tantangan
+
+Ubah kunci awal yang bernilai nol menjadi tepat `0x6b657931`. Program harus mencetak `STACK_MAGIC_OK`. Masukan dibatasi sampai akhir kunci; ret2win tidak diperlukan.
+
+Pilih **Uji payload** untuk menjalankan masukan di browser. Setelah berhasil, **Kirim jawaban** meminta verifikasi server dan menyimpan progress. Masuk dengan GitHub diperlukan untuk mengirim jawaban.
+
+Petunjuk dapat dibuka satu per satu. Untuk akun yang masuk, setiap petunjuk mengurangi poin sesuai aturan yang ditampilkan di panduan.
+
+## Source latihan
+
+Tab **Kode sumber** menampilkan representasi konsep C. Binary dibuat dari [assembly GNU](/sources/stack-magic.S); layout stack mengikuti assembly tersebut, bukan hasil kompilasi C. Anda juga dapat mengunduh [binary latihan](/binaries/stack-magic.bin).

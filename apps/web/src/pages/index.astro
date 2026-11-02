@@ -8,7 +8,7 @@ const steps = [
 	{ title: 'Baca materi', body: 'Tiap level dibuka dengan penjelasan singkat tentang satu konsep, tanpa teori berlebih.' },
 	{
 		title: 'Jalankan payload',
-		body: 'Tulis payload di workspace dan jalankan di emulator x86 dalam browser. Jalankan per instruksi sambil memantau register dan stack.',
+		body: 'Tulis payload di workspace dan jalankan di emulator x86 dalam browser. Periksa register dan stack setelah setiap uji.',
 	},
 	{
 		title: 'Kirim dan naik level',
@@ -17,7 +17,7 @@ const steps = [
 ];
 
 const worlds = [
-	{ name: 'Stack', body: 'Buffer, variabel, return address, dan lompat ke fungsi win.', status: 'Dalam penulisan' },
+	{ name: 'Stack Dasar', body: 'Lima soal dari overwrite variabel sampai ret2win dengan argumen.', status: '5 soal tersedia' },
 	{ name: 'Shellcode', body: 'Menjalankan kode sendiri dari stack.', status: 'Dalam penulisan' },
 	{ name: 'ROP', body: 'Menyusun potongan kode yang sudah ada.', status: 'Setelah v1' },
 	{ name: 'Format string', body: 'Membaca dan menulis memori lewat printf.', status: 'Setelah v1' },

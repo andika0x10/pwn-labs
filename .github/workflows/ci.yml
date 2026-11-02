@@ -21,3 +21,13 @@ jobs:
       - run: npm run lint
       - run: npm run check
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: cp .dev.vars.example .dev.vars
+      - run: npm exec -w apps/web -- wrangler d1 migrations apply pwn-labs-db --local
+      - run: npm run test:e2e
+        env:
+          GITHUB_CLIENT_ID: ci-placeholder
+          GITHUB_CLIENT_SECRET: ci-placeholder
+          FLAG_SECRET: ci-local-tests-only
+      - run: node scripts/browser-parity.mjs
+      - run: node scripts/release-smoke.mjs local --remove-examples

@@ -3,7 +3,7 @@
 	"compatibility_date": "2026-10-23",
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "pwn-labs",
-	"main": "@astrojs/cloudflare/entrypoints/server",
+	"main": "./src/worker.ts",
 	"assets": {
 		"directory": "./dist",
 		"binding": "ASSETS"

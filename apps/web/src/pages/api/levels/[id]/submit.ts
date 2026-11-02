@@ -37,7 +37,8 @@ export const POST: APIRoute = async (context) => {
   }
   const rate = await recordAttempt(env, locals.user, level.data.id);
   if (rate.status === 429) return failure('RATE_LIMITED', 'Batas 10 pengiriman per menit tercapai.', 429);
-  const replay = await replayPayload(Uint8Array.from(body.payload));
+  const replay = await replayPayload(level.data, Uint8Array.from(body.payload));
+  if (context.request.headers.has('X-Pwn-Smoke')) console.log('pwn-replay', { level: level.data.id, ...replay.metrics });
   if (!replay.reachedWin) return failure('NOT_SOLVED', 'Payload berhenti tanpa mencapai kondisi sukses.', 422);
   const state = await sessionState(env, locals.user, level.data.id);
   const points = score(level.data.points, state.hints);

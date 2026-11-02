@@ -1,0 +1,60 @@
+---
+id: stack-ret2win
+world: stack
+order: 4
+title: Temukan Jalan ke Win
+description: Temukan fungsi tersembunyi di disassembly dan arahkan eksekusi ke sana.
+points: 250
+arch: x86-32
+binary: /binaries/stack-ret2win.bin
+source: /sources/stack-ret2win.c
+success:
+  type: output-contains
+  value: STACK_RET2WIN_OK
+symbols:
+  _start: 134512640
+  failure: 134512645
+  message: 134512724
+  message_end: 134512741
+  vuln: 134512657
+  win: 134512693
+hints:
+  - Jalur normal dari _start hanya memanggil vuln. Cari fungsi yang mencetak
+    penanda sukses.
+  - Pada tab Instruksi mesin, fungsi win ditandai. Angka di kolom kiri adalah
+    alamat instruksinya.
+  - Hitung pengisi dari buffer 56 byte ditambah saved EBP, lalu gabungkan dengan
+    alamat win dalam bentuk p32.
+requires:
+  - stack-offset
+draft: false
+example: false
+---
+
+## Tujuan
+
+Temukan fungsi tersembunyi di disassembly dan arahkan eksekusi ke sana.
+
+## Konsep
+
+**Ret2win** adalah teknik mengarahkan `ret` ke fungsi yang sudah ada di program. Anda tidak perlu memasukkan kode mesin baru. Syaratnya adalah mengontrol return address dan mengetahui alamat fungsi tujuan.
+
+Pada soal sebelumnya alamat tujuan diberikan. Kini Anda mencari sendiri alamat `win` dari disassembly. Semua alamat pada latihan ini tetap agar analisis bisa diulang. Offset soal sebelumnya tidak berlaku begitu saja karena ukuran buffer berubah.
+
+## Panduan alat
+
+Baca source untuk mengenali fungsi dan ukuran buffer. Buka **Instruksi mesin**: kolom kiri berisi alamat, sedangkan kolom kanan berisi instruksi x86. Cari anotasi `fungsi win`, lalu catat alamat instruksi pertama fungsi tersebut.
+
+Susun pengisi dan alamat dengan operator `+`. Gunakan register EIP serta memori stack untuk membedakan kesalahan offset dari kesalahan alamat. Binary asli dan source assembly juga tersedia di bawah materi.
+
+## Tantangan
+
+Temukan alamat `win` dan buat program mencetak `STACK_RET2WIN_OK`. Jalur normal tidak memanggil fungsi itu. Materi ini tidak menyediakan alamat atau payload lengkap.
+
+Pilih **Uji payload** untuk menjalankan masukan di browser. Setelah berhasil, **Kirim jawaban** meminta verifikasi server dan menyimpan progress. Masuk dengan GitHub diperlukan untuk mengirim jawaban.
+
+Petunjuk dapat dibuka satu per satu. Untuk akun yang masuk, setiap petunjuk mengurangi poin sesuai aturan yang ditampilkan di panduan.
+
+## Source latihan
+
+Tab **Kode sumber** menampilkan representasi konsep C. Binary dibuat dari [assembly GNU](/sources/stack-ret2win.S); layout stack mengikuti assembly tersebut, bukan hasil kompilasi C. Anda juga dapat mengunduh [binary latihan](/binaries/stack-ret2win.bin).

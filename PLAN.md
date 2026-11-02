@@ -8,7 +8,7 @@
 
 Target pengguna: pemula sampai menengah, dengan jalur belajar bertahap (world dan level).
 
-Pembagian kerja: agent membangun platform dan **template konten**. Materi dan soal nyata ditulis oleh pemilik proyek setelahnya, jadi platform harus membuat penambahan level semudah mengisi template.
+Pembagian kerja diperbarui atas permintaan pemilik proyek: agent membangun platform, template, dan soal nyata. World pertama adalah Stack Dasar dengan lima soal x86-32 berbahasa Indonesia.
 
 Fitur v1:
 
@@ -191,29 +191,29 @@ hints:
 requires: [stack-02-overwrite-var]
 ```
 
-Binary challenge ditulis sebagai kode C atau assembly kecil di `challenges/src/`, dikompilasi lewat skrip (`npm run build:challenges`) menjadi blob di `public/binaries/`. Hasil build di-commit agar CI tidak butuh toolchain.
+Binary challenge ditulis sebagai assembly GNU di `challenges/src/`, dibangun dengan GCC/binutils lewat `npm run build:challenges`. Representasi C disediakan untuk belajar dan diberi label demikian. Blob, simbol, source publik, dan manifest hasil build di-commit agar menjalankan situs tidak membutuhkan toolchain.
 
 ### Template konten (tugas agent)
 
-**Agent hanya membangun platform dan template. Agent tidak menulis materi atau soal nyata.** Semua yang dibuat di bagian ini harus membuat level baru semudah menyalin template lalu mengisi bagian yang kosong.
+**Agent membangun platform, template, dan soal nyata sesuai arahan pemilik proyek.** Template tetap memudahkan penambahan level berikutnya.
 
 1. **Skema frontmatter** di `src/content.config.ts` (zod). Validasi: `id` unik, `requires` merujuk level yang ada, file binary ada, poin positif, `arch` salah satu nilai yang didukung. Tambahkan field opsional `draft` dan `example`. Pesan error harus menyebut file dan field yang salah.
 2. **Template level** di `templates/level/`:
    - `level.mdx`: frontmatter lengkap dengan komentar per field, serta kerangka materi (Tujuan, Konsep, Panduan alat, Tantangan, Hint) berisi placeholder `TODO`.
-   - `challenge.c` dan `challenge.asm`: kerangka program dengan `main`, fungsi `win`, dan komentar tempat kerentanan diletakkan. Boleh tanpa kerentanan.
+   - `challenge.S`: kerangka freestanding dengan `_start` dan `win`; `challenge.c` merupakan representasi konsep. Keduanya memuat tempat kerentanan dan kondisi sukses.
    - `solution.payload`: payload ekspresi (format di bagian 6) yang dipakai CI untuk memverifikasi level. Tidak pernah dikirim ke klien.
-   - `meta.json`: konfigurasi emulator (arsitektur, alamat dasar, ukuran stack, kondisi sukses, daftar simbol).
+   - `negative.json`: ekspresi payload salah untuk regresi. Konfigurasi emulator berada di frontmatter; simbol dihasilkan build.
 3. **Template world** di `templates/world/`: `world.json` (id, judul, deskripsi, urutan) dan halaman pengantar `index.mdx`.
 4. **Skrip scaffold**: `npm run new:world -- <slug>` dan `npm run new:level -- <world> <slug>` menyalin template ke lokasi yang benar, lalu mengisi `id`, urutan, dan path binary secara otomatis. Level baru dibuat dengan `draft: true`.
 5. **Skrip validasi dan tes**: `npm run validate:content` memeriksa skema, prasyarat, dan file. `npm run build:challenges` membuat blob dari `challenges/src/`. `npm run test:levels` menjalankan `solution.payload` tiap level di emulator dan memastikan kondisi sukses tercapai. Ketiganya berjalan di CI. Level `draft: true` dilewati tes dan tidak tampil di produksi.
-6. **Dua level contoh** di world `example` (`example-01`, dan `example-02` yang mensyaratkan `example-01`). Isinya placeholder minimal yang berfungsi, hanya untuk menguji seluruh pipeline: workspace, verifikasi server, flag, poin, penguncian, dan leaderboard. Tandai `example: true` agar mudah dihapus atau disembunyikan di produksi.
+6. **Lima soal nyata** di world `stack`: `stack-overwrite` (100), `stack-magic` (150), `stack-offset` (200), `stack-ret2win` (250), dan `stack-arguments` (300). Prasyarat berurutan; tiga hint per soal. Hapus world contoh beserta aset, progress, dan submission kedua soal contohnya, lalu bangun ulang leaderboard.
 7. **Panduan authoring** di `docs/authoring.md`: cara membuat world dan level dari nol, format payload, cara menjalankan tes level, dan checklist sebelum menerbitkan.
 
 Flag tidak pernah ditulis di konten. Server menurunkannya sendiri (bagian 3.3).
 
-### Rencana level (referensi, bukan tugas agent)
+### Arah kurikulum lanjutan
 
-Daftar berikut hanya gambaran arah konten untuk pemilik proyek. Agent tidak membuat materi atau soal dari daftar ini.
+Daftar berikut adalah arah lanjutan setelah lima soal Stack Dasar terbit. Soal nyata kini boleh ditulis agent atas arahan pemilik proyek.
 
 **World 1: Stack** (v1)
 
@@ -401,8 +401,8 @@ Gunakan npm workspaces (field workspaces di package.json root). Bagikan tipe dan
 ### Fase 2: Workspace challenge (tanpa akun)
 
 - Emulator worker lengkap, disassembly, stack viewer, registers, terminal, payload builder.
-- Level contoh dari template (bagian 5) dapat diselesaikan secara lokal.
-- **Selesai bila**: ada tes otomatis (Vitest) untuk parser payload dan emulator, serta tes Playwright yang menyelesaikan level contoh.
+- Level Stack dari template (bagian 5) dapat diselesaikan secara lokal.
+- **Selesai bila**: ada tes otomatis (Vitest) untuk parser payload dan emulator, serta tes Playwright yang menyelesaikan level Stack.
 
 ### Fase 3: Auth, D1, progress
 
@@ -423,7 +423,7 @@ Gunakan npm workspaces (field workspaces di package.json root). Bagikan tipe dan
 
 - Tulis panduan authoring (\`docs/authoring.md\`) dan pastikan scaffold level bekerja dari awal sampai akhir.
 - Deploy ke Cloudflare (staging lalu produksi), CI untuk lint, typecheck, test.
-- **Selesai bila**: level contoh bisa diselesaikan dari akun baru di produksi, dan level baru bisa dibuat dari scaffold tanpa mengubah kode platform.
+- **Selesai bila**: level Stack bisa diselesaikan dari akun baru di produksi, dan level baru bisa dibuat dari scaffold tanpa mengubah kode platform.
 
 ## 11. Aturan untuk coding agent
 
@@ -438,7 +438,7 @@ Gunakan npm workspaces (field workspaces di package.json root). Bagikan tipe dan
 
 - Pengembangan dilakukan di WSL (bagian 2.2). Jalankan semua perintah di terminal WSL dan simpan proyek di filesystem WSL.
 
-* Jangan menulis materi atau soal nyata. Buat template, scaffold, validasi, dan level contoh saja (bagian 5). Jika sebuah fase membutuhkan konten untuk diuji, pakai level contoh.
+* Tulis materi dan soal nyata sesuai kurikulum yang disetujui pemilik proyek. Solution tetap privat di repo, di luar aset publik dan bundle klien.
 
 - Setiap commit git wajib memakai trailer `Co-Authored-By` di akhir pesan commit, dengan nama model yang sedang dipakai agent dan email `noreply@anthropic.com`. Pisahkan trailer dari isi pesan dengan satu baris kosong. Contoh pesan commit lengkap:
 

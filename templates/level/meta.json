@@ -1,8 +1,0 @@
-{
-  "arch": "x86-32",
-  "baseAddress": 134512640,
-  "stackAddress": 3221221376,
-  "stackSize": 65536,
-  "success": { "type": "eip-reaches", "symbol": "win" },
-  "symbols": { "win": 0 }
-}

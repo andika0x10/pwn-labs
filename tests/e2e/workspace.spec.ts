@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const levelPath = '/play/example/example-01';
+const levelPath = '/play/stack/stack-overwrite';
 
 async function openWorkspace(page: Page) {
   await page.goto(levelPath);
   await expect(page.getByRole('button', { name: 'Uji payload' })).toBeEnabled({ timeout: 30_000 });
+  await page.getByLabel('Payload', { exact: true }).fill('"A" * 24 + p32(1)');
 }
 
 // Kendalikan waktu/error worker untuk menguji UI, bukan perilaku CPU.
@@ -16,14 +17,14 @@ async function mockWorker(page: Page, mode: 'delayed' | 'error') {
       if (command === 'load') self.postMessage({ id, ok: true, data });
       else setTimeout(() => self.postMessage(${mode === 'error'
         ? "{ id, ok: false, error: { message: 'Uji terputus. Coba kembali.' } }"
-        : "{ id, ok: true, data: { ...data, reachedWin: true, stdout: 'WIN' } }"}), 800);
+        : "{ id, ok: true, data: { ...data, reachedWin: true, stdout: 'STACK_STATUS_OK' } }"}), 800);
     };`,
   }));
 }
 
 // Simulasikan props pengguna masuk untuk menguji alur submit tanpa akun OAuth sungguhan.
 async function mockSignedInPage(page: Page) {
-  await page.route('**/play/example/example-01', async (route) => {
+  await page.route('**/play/stack/stack-overwrite', async (route) => {
     const response = await route.fetch();
     const html = await response.text();
     expect(html).toContain('&quot;authenticated&quot;:[0,false]');
@@ -31,21 +32,23 @@ async function mockSignedInPage(page: Page) {
   });
 }
 
-test('tamu dapat menjalankan payload level contoh', async ({ page }) => {
-  await page.goto('/play/example/example-01');
-  await expect(page.getByRole('heading', { name: 'Ubah return address' })).toBeVisible();
+test('tamu dapat menjalankan payload level Stack', async ({ page }) => {
+  await page.goto('/play/stack/stack-overwrite');
+  await expect(page.getByRole('heading', { name: 'Ubah Status' })).toBeVisible();
   await expect(page.getByText('Siap diuji. Baca kode sumber, lalu periksa payload Anda.')).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel('Payload', { exact: true }).fill('"A" * 24 + p32(1)');
   await page.getByRole('button', { name: 'Uji payload' }).click();
-  await expect(page.getByText('Uji berhasil: program mencapai win. Kirim jawaban untuk diperiksa server dan menyimpan poin.')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByLabel('Output terminal')).toContainText('WIN');
+  await expect(page.getByText('Uji berhasil: kondisi sukses terpenuhi. Kirim jawaban untuk diperiksa server dan menyimpan poin.')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByLabel('Output terminal')).toContainText('STACK_STATUS_OK');
 });
 
 test('submit tamu diarahkan ke GitHub OAuth', async ({ page }) => {
   await page.route('https://github.com/login/oauth/authorize**', (route) => route.abort());
-  await page.goto('/play/example/example-01');
+  await page.goto('/play/stack/stack-overwrite');
   const callback = new URL('/auth/github/callback', page.url()).href;
   const oauthRequest = page.waitForRequest((request) => request.url().startsWith('https://github.com/login/oauth/authorize'));
   await expect(page.getByRole('button', { name: 'Uji payload' })).toBeEnabled({ timeout: 30_000 });
+  await page.getByLabel('Payload', { exact: true }).fill('"A" * 24 + p32(1)');
   await page.getByRole('button', { name: 'Uji payload' }).click();
   await expect(page.getByRole('button', { name: 'Kirim jawaban' })).toBeEnabled();
   await page.getByRole('button', { name: 'Kirim jawaban' }).click();
@@ -67,7 +70,7 @@ test('panduan menampilkan kode sumber dan mengharuskan uji ulang setiap perubaha
   await expect(page.getByRole('link', { name: /Level berikutnya/ })).toHaveCount(0);
   await run.click();
   await expect(submit).toBeEnabled();
-  await payload.fill('"A" * 64');
+  await payload.fill('"A" * 8');
   await expect(submit).toBeDisabled();
   await expect(page.getByLabel('Output terminal')).toHaveCount(0);
   await run.click();
@@ -76,12 +79,12 @@ test('panduan menampilkan kode sumber dan mengharuskan uji ulang setiap perubaha
   await payload.fill('p32(');
   await expect(page.getByText(/Perbaiki format payload:/)).toBeVisible();
   await expect(run).toBeDisabled();
-  await payload.fill('"A" * 68 + p32(0x0804802d)');
+  await payload.fill('"A" * 24 + p32(1)');
   await run.click();
   await expect(submit).toBeEnabled();
   // Mengembalikan teks sebelumnya tetap memerlukan uji baru.
-  await payload.fill('"A" * 64');
-  await payload.fill('"A" * 68 + p32(0x0804802d)');
+  await payload.fill('"A" * 8');
+  await payload.fill('"A" * 24 + p32(1)');
   await expect(submit).toBeDisabled();
   await page.getByRole('button', { name: 'Lihat petunjuk 1' }).click();
   await expect(page.getByText('Petunjuk 1:', { exact: false })).toBeVisible();
@@ -112,12 +115,13 @@ test('error worker melepaskan tombol agar pengujian dapat dicoba kembali', async
 
 test('draf bertahan setelah kembali ke halaman dan wajib diuji ulang', async ({ page }) => {
   await openWorkspace(page);
-  const draft = '"B" * 68 + p32(0x0804802d)';
+  const draft = '"B" * 24 + p32(1)';
   await page.getByLabel('Payload', { exact: true }).fill(draft);
   await page.getByRole('button', { name: 'Uji payload' }).click();
   await expect(page.getByRole('button', { name: 'Kirim jawaban' })).toBeEnabled();
   await page.goto('/play');
-  await openWorkspace(page);
+  await page.goto(levelPath);
+  await expect(page.getByRole('button', { name: 'Uji payload' })).toBeEnabled({ timeout: 30_000 });
   await expect(page.getByLabel('Payload', { exact: true })).toHaveValue(draft);
   await expect(page.getByRole('button', { name: 'Kirim jawaban' })).toBeDisabled();
 });
@@ -125,13 +129,13 @@ test('draf bertahan setelah kembali ke halaman dan wajib diuji ulang', async ({ 
 test('pengiriman menangani jaringan, penolakan, dan keberhasilan server', async ({ page }) => {
   await mockSignedInPage(page);
   let attempts = 0;
-  await page.route('**/api/levels/example-01/submit', async (route) => {
+  await page.route('**/api/levels/stack-overwrite/submit', async (route) => {
     attempts++;
     if (attempts === 1) return route.abort('failed');
     if (attempts === 2) return route.fulfill({ status: 422, json: { error: { message: 'Payload belum memenuhi tujuan.' } } });
     await new Promise((resolve) => setTimeout(resolve, 500));
     const body = route.request().postDataJSON();
-    expect(body.payload).toHaveLength(72);
+    expect(body.payload).toHaveLength(28);
     await route.fulfill({ json: { data: { flag: 'pwn{contoh}', points: 100 } } });
   });
   await openWorkspace(page);

@@ -1,0 +1,61 @@
+---
+id: stack-arguments
+world: stack
+order: 5
+title: Win dengan Argumen
+description: Bangun stack panggilan fungsi dengan dua argumen yang benar.
+points: 300
+arch: x86-32
+binary: /binaries/stack-arguments.bin
+source: /sources/stack-arguments.c
+success:
+  type: output-contains
+  value: STACK_ARGUMENTS_OK
+symbols:
+  _start: 134512640
+  failure: 134512645
+  message: 134512752
+  message_end: 134512771
+  vuln: 134512657
+  win: 134512701
+hints:
+  - "Mencapai win belum cukup: baca dua nilai argumen yang diperiksa fungsi
+    tersebut."
+  - Pada awal fungsi x86-32 cdecl, [ESP] adalah alamat kembali, [ESP+4] argumen
+    pertama, dan [ESP+8] argumen kedua.
+  - Setelah alamat win, sediakan empat byte alamat kembali pengganti, kemudian
+    argumen pertama dan kedua. Win keluar lewat exit, sehingga alamat kembali
+    pengganti tidak dipakai.
+requires:
+  - stack-ret2win
+draft: false
+example: false
+---
+
+## Tujuan
+
+Bangun stack panggilan fungsi dengan dua argumen yang benar.
+
+## Konsep
+
+Dalam konvensi panggilan **cdecl x86-32**, argumen diletakkan di stack. Pada saat fungsi baru dimasuki, `[ESP]` berisi alamat kembali, `[ESP+4]` argumen pertama, dan `[ESP+8]` argumen kedua.
+
+Ketika masuk melalui `ret`, prosesor tidak melakukan `call` baru. Anda perlu menyusun sendiri stack yang menyerupai hasil pemanggilan fungsi: alamat kembali pengganti disusul argumen-argumen. Urutan ini berbeda dari sekadar menambahkan argumen tepat setelah pengisi.
+
+## Panduan alat
+
+Cari alamat `win` pada disassembly dan hitung offset berdasarkan buffer soal ini. Baca dua pemeriksaan di representasi C: argumen pertama harus `0x13579bdf`, argumen kedua `0x2468ace0`.
+
+Jika output belum sesuai, periksa memori sesudah lokasi return address. Pastikan setiap bagian memakai empat byte. Fungsi `win` mengakhiri program dengan `exit`, sehingga slot alamat kembali pengganti tetap harus ada meskipun tidak akan dijalankan.
+
+## Tantangan
+
+Arahkan eksekusi ke `win` dengan kedua argumen benar sampai program mencetak `STACK_ARGUMENTS_OK`. Program yang mencapai fungsi dengan argumen salah akan keluar tanpa penanda sukses.
+
+Pilih **Uji payload** untuk menjalankan masukan di browser. Setelah berhasil, **Kirim jawaban** meminta verifikasi server dan menyimpan progress. Masuk dengan GitHub diperlukan untuk mengirim jawaban.
+
+Petunjuk dapat dibuka satu per satu. Untuk akun yang masuk, setiap petunjuk mengurangi poin sesuai aturan yang ditampilkan di panduan.
+
+## Source latihan
+
+Tab **Kode sumber** menampilkan representasi konsep C. Binary dibuat dari [assembly GNU](/sources/stack-arguments.S); layout stack mengikuti assembly tersebut, bukan hasil kompilasi C. Anda juga dapat mengunduh [binary latihan](/binaries/stack-arguments.bin).

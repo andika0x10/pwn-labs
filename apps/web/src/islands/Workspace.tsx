@@ -1,33 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parsePayload, PayloadSyntaxError, toHex } from '../lib/payload/parser';
-import type { EmulatorRequest, EmulatorResponse, EmulatorSnapshot } from '../lib/emulator/types';
+import type { ChallengeConfig, EmulatorRequest, EmulatorResponse, EmulatorSnapshot } from '../lib/emulator/types';
 
 interface Props {
   levelId: string;
   source: string;
-  winAddress: number;
+  challenge: ChallengeConfig;
   authenticated: boolean;
   hints: string[];
-  example: boolean;
   nextLevel?: { href: string; title: string };
 }
 
 const tabs = [
-  { id: 'source', label: 'Kode sumber', description: 'Kode program yang akan diuji. Cari tempat program menerima masukan dan fungsi tujuan win.' },
+  { id: 'source', label: 'Kode sumber', description: 'Representasi konsep C. Cari batas masukan dan kondisi sukses; layout sebenarnya mengikuti assembly latihan.' },
   { id: 'disassembly', label: 'Instruksi mesin', description: 'Bentuk instruksi yang dibaca CPU, beserta alamatnya dalam bilangan heksadesimal.' },
-  { id: 'stack', label: 'Memori stack', description: 'Stack menyimpan data sementara dan alamat kembali. Tampilan ini masih berupa ilustrasi tetap, bukan isi memori aktual hasil uji.' },
-  { id: 'registers', label: 'Register CPU', description: 'Register adalah tempat CPU menyimpan nilai sementara. Tampilan ini memakai model sederhana, bukan rekaman lengkap hasil uji.' },
+  { id: 'stack', label: 'Memori stack', description: 'Isi memori stack aktual sesudah uji terakhir, termasuk ketika program crash. Byte diurutkan dari alamat rendah ke tinggi.' },
+  { id: 'registers', label: 'Register CPU', description: 'Nilai register CPU aktual sesudah uji terakhir. EIP menunjukkan posisi eksekusi atau alamat tujuan ketika program crash.' },
 ] as const;
 const steps = ['Pahami', 'Susun', 'Uji', 'Kirim'];
 
-export default function Workspace({ levelId, source, winAddress, authenticated, hints, example, nextLevel }: Props) {
+export default function Workspace({ levelId, source, challenge, authenticated, hints, nextLevel }: Props) {
   const worker = useRef<Worker | undefined>(undefined);
   const sequence = useRef(0);
   const revision = useRef(0);
   const operation = useRef(false);
   const hintOperation = useRef(false);
   const pending = useRef(new Map<number, { resolve: (value: EmulatorSnapshot) => void; reject: (error: Error) => void }>());
-  const [expression, setExpression] = useState(example ? '"A" * 68 + p32(0x0804802d)' : '"A" * 64');
+  const [expression, setExpression] = useState('"A" * 8');
   const [snapshot, setSnapshot] = useState<EmulatorSnapshot>();
   const [active, setActive] = useState<(typeof tabs)[number]['id']>('source');
   const [step, setStep] = useState(0);
@@ -61,7 +60,7 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
       resolve: (value) => { window.clearTimeout(timer); resolve(value); },
       reject: (error) => { window.clearTimeout(timer); reject(error); },
     });
-    worker.current.postMessage({ id, command, payload: payload ? Array.from(payload) : undefined } satisfies EmulatorRequest);
+    worker.current.postMessage({ id, command, payload: payload ? Array.from(payload) : undefined, challenge: command === 'load' ? challenge : undefined } satisfies EmulatorRequest);
   });
 
   useEffect(() => {
@@ -101,21 +100,21 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
   useEffect(() => {
     if (active !== 'disassembly' || instructions.length) return;
     let cancelled = false;
-    Promise.all([import('capstone-wasm'), fetch(`/binaries/${levelId}.bin`).then((response) => {
+    Promise.all([import('capstone-wasm'), fetch(challenge.binary).then((response) => {
       if (!response.ok) throw new Error('Binary tidak tersedia.');
       return response.arrayBuffer();
     })]).then(async ([capstone, binary]) => {
       await capstone.loadCapstone();
       const engine = new capstone.Capstone(capstone.Const.CS_ARCH_X86, capstone.Const.CS_MODE_32);
       try {
-        const rows = engine.disasm(new Uint8Array(binary), { address: 0x08048000, count: 40 }).map((item: { address: number | bigint; mnemonic: string; opStr: string }) => [Number(item.address), `${item.mnemonic} ${item.opStr}`] as [number, string]);
+        const rows = engine.disasm(new Uint8Array(binary), { address: 0x08048000, count: 200 }).map((item: { address: number | bigint; mnemonic: string; opStr: string }) => [Number(item.address), `${item.mnemonic} ${item.opStr}`] as [number, string]);
         if (!cancelled) setInstructions(rows);
       } finally { engine.close(); }
     }).catch(() => {
       if (!cancelled) setInstructionError('Instruksi mesin gagal dimuat. Periksa koneksi lalu muat ulang halaman; kode sumber tetap dapat dibaca.');
     });
     return () => { cancelled = true; };
-  }, [active, instructions.length, levelId]);
+  }, [active, instructions.length, levelId, challenge.binary]);
 
   function changeExpression(value: string) {
     revision.current++;
@@ -142,8 +141,8 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
       if (value.reachedWin) {
         setTestedRevision(currentRevision);
         setStep(3);
-        setStatus('Uji berhasil: program mencapai win. Kirim jawaban untuk diperiksa server dan menyimpan poin.');
-      } else setStatus('Uji belum berhasil: program berhenti tanpa mencapai win. Periksa payload atau lihat petunjuk, lalu uji kembali.');
+        setStatus('Uji berhasil: kondisi sukses terpenuhi. Kirim jawaban untuk diperiksa server dan menyimpan poin.');
+      } else setStatus('Uji belum berhasil: kondisi sukses belum terpenuhi. Periksa payload atau lihat petunjuk, lalu uji kembali.');
     } catch (error) {
       if (revision.current === currentRevision) setStatus(`Uji gagal. ${error instanceof Error ? error.message : 'Coba uji kembali.'}`);
     } finally { operation.current = false; setBusy(false); }
@@ -216,23 +215,15 @@ export default function Workspace({ levelId, source, winAddress, authenticated, 
       <p className="mb-4 text-sm leading-6 text-muted">{tabs.find((tab) => tab.id === active)?.description}</p>
       <div className="max-h-72 overflow-auto overscroll-contain font-mono text-sm">
         {active === 'source' && <pre className="whitespace-pre-wrap break-words leading-6">{source}</pre>}
-        {active === 'disassembly' && (instructions.length ? <table className="w-full border-collapse"><tbody>{instructions.map(([address, instruction]) => <tr key={address}><td className="px-2 py-2 text-muted">0x{address.toString(16)}</td><td className="whitespace-nowrap px-2 py-2">{instruction}{address === winAddress ? ' ; fungsi win' : ''}</td></tr>)}</tbody></table> : <p>{instructionError || 'Memuat instruksi mesin…'}</p>)}
+        {active === 'disassembly' && (instructions.length ? <table className="w-full border-collapse"><tbody>{instructions.map(([address, instruction]) => <tr key={address}><td className="px-2 py-2 text-muted">0x{address.toString(16)}</td><td className="whitespace-nowrap px-2 py-2">{instruction}{address === challenge.symbols.win ? ' ; fungsi win' : ''}</td></tr>)}</tbody></table> : <p>{instructionError || 'Memuat instruksi mesin…'}</p>)}
         {active === 'stack' && <table className="w-full border-collapse"><tbody>{(snapshot?.stack ?? []).map((row) => <tr key={row.address}><td className="border-b border-border px-2 py-2 text-muted">0x{row.address.toString(16)}</td><td className="whitespace-nowrap border-b border-border px-2 py-2">{row.bytes}</td><td className="border-b border-border px-2 py-2 text-muted">{row.role === 'return address' ? 'Alamat kembali' : row.role}</td></tr>)}</tbody></table>}
         {active === 'registers' && <dl className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border sm:grid-cols-4">{Object.entries(snapshot?.registers ?? {}).map(([name, value]) => <div key={name} className="bg-bg p-2"><dt className="text-muted">{name}</dt><dd className="mt-1">0x{value.toString(16).padStart(8, '0')}</dd></div>)}</dl>}
-        {(active === 'stack' || active === 'registers') && !snapshot && <p>Uji payload untuk menampilkan model ilustrasinya.</p>}
+        {(active === 'stack' || active === 'registers') && !snapshot && <p>Uji payload untuk menampilkan isi memori dan register aktual.</p>}
       </div>
     </div>
     <div className="border-t border-border p-4">
       <label htmlFor="payload" className="text-base font-semibold">Payload</label>
-      <p id="payload-help" className="mt-1 text-sm leading-6 text-muted">Data masukan yang akan diterima program. {example ? 'Contoh lengkap sudah diisi; baca penjelasannya, lalu coba ubah dan uji.' : 'Susun masukan sesuai petunjuk tantangan.'}</p>
-      {example && <details className="mt-3 rounded-base border border-border p-3">
-        <summary className="cursor-pointer py-1 text-sm font-medium">Pahami contoh payload 72 byte</summary>
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-muted">
-          <li><code className="text-fg">"A" * 68</code> mengisi 64 byte buffer dan 4 byte saved EBP dengan huruf A.</li>
-          <li><code className="text-fg">p32(0x0804802d)</code> mengubah alamat fungsi win menjadi 4 byte dalam urutan little-endian: <code>2d 80 04 08</code>.</li>
-          <li>Jumlahnya 72 byte. Empat byte terakhir mengganti alamat kembali agar program menuju win.</li>
-        </ul>
-      </details>}
+      <p id="payload-help" className="mt-1 text-sm leading-6 text-muted">Data masukan yang akan diterima program. Susun masukan sesuai petunjuk tantangan.</p>
       <textarea id="payload" aria-describedby="payload-help payload-feedback" aria-invalid={!!parsed.error} value={expression} disabled={submitting} onFocus={() => { if (!canSubmit) setStep(1); }} onChange={(event) => changeExpression(event.target.value)} spellCheck={false} autoCapitalize="off" autoCorrect="off" className="mt-3 min-h-28 w-full resize-y rounded-base border border-border bg-surface p-3 font-mono text-base leading-6 disabled:opacity-60 sm:text-sm" />
       <p id="payload-feedback" className={`mt-2 text-sm ${parsed.error ? 'text-danger' : 'text-muted'}`}>{parsed.error ? `Perbaiki format payload: ${parsed.error}` : `${parsed.bytes.length} byte siap diuji.`}</p>
       {!parsed.error && <details className="mt-2 text-sm text-muted"><summary className="cursor-pointer py-2">Lihat byte heksadesimal</summary><p className="mt-1 break-all font-mono text-xs leading-6">{toHex(parsed.bytes)}</p></details>}

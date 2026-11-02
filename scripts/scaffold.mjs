@@ -56,7 +56,7 @@ if (kind === 'world') {
   await writeFile(target, template.replaceAll('__LEVEL__', id).replaceAll('__WORLD__', world).replaceAll('__ORDER__', String(order)));
   const sourceDir = path.join(root, 'challenges/src', id);
   await mkdir(sourceDir, { recursive: true });
-  for (const name of ['challenge.c', 'challenge.asm', 'solution.payload', 'meta.json']) {
+  for (const name of ['challenge.c', 'challenge.S', 'solution.payload', 'negative.json']) {
     const value = (await readFile(path.join(root, 'templates/level', name), 'utf8')).replaceAll('__LEVEL__', id).replaceAll('__WORLD__', world);
     await writeFile(path.join(sourceDir, name), value);
   }

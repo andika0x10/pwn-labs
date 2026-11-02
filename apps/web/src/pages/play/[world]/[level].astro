@@ -4,6 +4,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Workspace from '../../../islands/Workspace';
 import { findLevel, getPublishedLevels } from '../../../lib/content';
 import { env } from 'cloudflare:workers';
+import manifest from '../../../../../../challenges/manifest.json';
 
 export const prerender = false;
 const worldId = Astro.params.world!;
@@ -19,7 +20,10 @@ if (user && level.data.requires.length) {
 const allLevels = (await getPublishedLevels()).filter((entry) => entry.data.world === worldId);
 const next = allLevels.find((entry) => entry.data.order === level.data.order + 1);
 const { Content } = await render(level);
-const source = `void win(void) { write(1, "WIN\\n", 4); exit(0); }\n\nvoid vuln(void) {\n  char buffer[64];\n  read(0, buffer, 256);\n}`;
+const entry = (manifest as Record<string, (typeof manifest)[keyof typeof manifest]>)[level.data.id];
+if (!entry) return Astro.redirect('/404');
+const source = entry.source;
+const challenge = { binary: level.data.binary, arch: level.data.arch, symbols: level.data.symbols, success: level.data.success };
 ---
 
 <BaseLayout title={level.data.title} description={level.data.description}>
@@ -33,8 +37,8 @@ const source = `void win(void) { write(1, "WIN\\n", 4); exit(0); }\n\nvoid vuln(
 			<button id="tab-workspace" type="button" role="tab" aria-selected="false" aria-controls="panel-workspace" tabindex="-1" class="min-h-12 border-b-2 border-transparent px-4 text-sm font-medium text-muted">Workspace</button>
 		</div>
 		<div class="grid gap-10 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(32rem,1.28fr)] lg:items-start">
-			<article id="panel-materi" class="level-panel min-w-0" role="tabpanel" aria-labelledby="tab-materi"><div class="prose-pwn"><Content /></div><button type="button" data-open-workspace class="mt-6 min-h-12 rounded-base bg-accent px-5 text-sm font-medium text-bg lg:hidden">Buka workspace</button></article>
-			<div id="panel-workspace" class="level-panel min-w-0 lg:sticky lg:top-5" role="tabpanel" aria-labelledby="tab-workspace"><Workspace client:load levelId={level.data.id} source={source} winAddress={level.data.symbols.win ?? 0x0804802d} authenticated={!!user} hints={level.data.hints} example={level.data.example} nextLevel={next ? { href: `/play/${worldId}/${next.data.id}`, title: next.data.title } : undefined} /></div>
+			<article id="panel-materi" class="level-panel min-w-0" role="tabpanel" aria-labelledby="tab-materi"><div class="prose-pwn"><Content />{level.data.id === 'stack-offset' && <p>Alamat fungsi target: <code>0x{level.data.symbols.target.toString(16)}</code>.</p>}</div><button type="button" data-open-workspace class="mt-6 min-h-12 rounded-base bg-accent px-5 text-sm font-medium text-bg lg:hidden">Buka workspace</button></article>
+			<div id="panel-workspace" class="level-panel min-w-0 lg:sticky lg:top-5" role="tabpanel" aria-labelledby="tab-workspace"><Workspace client:load levelId={level.data.id} source={source} challenge={challenge} authenticated={!!user} hints={level.data.hints} nextLevel={next ? { href: `/play/${worldId}/${next.data.id}`, title: next.data.title } : undefined} /></div>
 		</div>
 	</div>
 </BaseLayout>

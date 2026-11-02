@@ -1,0 +1,60 @@
+---
+id: stack-offset
+world: stack
+order: 3
+title: Kuasai Alamat Kembali
+description: Temukan jarak dari buffer ke alamat kembali dan kendalikan tujuan ret.
+points: 200
+arch: x86-32
+binary: /binaries/stack-offset.bin
+source: /sources/stack-offset.c
+success:
+  type: output-contains
+  value: STACK_OFFSET_OK
+symbols:
+  _start: 134512640
+  failure: 134512645
+  message: 134512716
+  message_end: 134512732
+  target: 134512685
+  vuln: 134512657
+hints:
+  - Fungsi menyimpan EBP sebelum menyediakan ruang buffer. Ret membaca alamat
+    sesudah saved EBP.
+  - Coba cyclic(80), lalu lihat nilai EIP ketika crash. cyclic_find(nilai EIP)
+    memberi posisi empat byte tersebut dalam pola.
+  - Jarak ke return address mencakup buffer 40 byte dan saved EBP 4 byte.
+    Gunakan p32 untuk menulis alamat target yang disediakan.
+requires:
+  - stack-magic
+draft: false
+example: false
+---
+
+## Tujuan
+
+Temukan jarak dari buffer ke alamat kembali dan kendalikan tujuan ret.
+
+## Konsep
+
+Instruksi `call` menyimpan **return address**, yaitu alamat instruksi berikutnya pada pemanggil. Fungsi `vuln` kemudian menyimpan EBP dan menyediakan buffer di stack. Saat fungsi selesai, `leave` memulihkan frame dan `ret` mengambil alamat kembali dari stack.
+
+Overflow kini dapat mencapai return address. **Offset** adalah jumlah byte dari awal buffer ke bagian yang ingin ditimpa. Empat byte saved EBP juga perlu dilewati; ukuran buffer saja belum tentu sama dengan offset.
+
+## Panduan alat
+
+Alamat target ditampilkan di bawah materi ini. Tugas Anda adalah menemukan jaraknya dari awal buffer. Anda boleh menghitung dari source atau menggunakan pola `cyclic(80)`.
+
+Jalankan pola tersebut dan buka **Register CPU**. Crash setelah `ret` biasanya membuat EIP berisi empat byte pola. Masukkan `cyclic_find(angka)` sebagai ekspresi payload untuk melihat offset dalam pratinjau byte heksadesimal. Pembantu di situs ini menghasilkan empat byte offset dalam little-endian; misalnya `10 00 00 00` berarti offset 16. Cocokkan dengan panel stack yang menandai saved EBP dan alamat kembali.
+
+## Tantangan
+
+Ganti return address dengan alamat fungsi `target` yang disediakan, sampai program mencetak `STACK_OFFSET_OK`. Crash saat mencari offset adalah bagian dari latihan; crash saja belum berarti berhasil.
+
+Pilih **Uji payload** untuk menjalankan masukan di browser. Setelah berhasil, **Kirim jawaban** meminta verifikasi server dan menyimpan progress. Masuk dengan GitHub diperlukan untuk mengirim jawaban.
+
+Petunjuk dapat dibuka satu per satu. Untuk akun yang masuk, setiap petunjuk mengurangi poin sesuai aturan yang ditampilkan di panduan.
+
+## Source latihan
+
+Tab **Kode sumber** menampilkan representasi konsep C. Binary dibuat dari [assembly GNU](/sources/stack-offset.S); layout stack mengikuti assembly tersebut, bukan hasil kompilasi C. Anda juga dapat mengunduh [binary latihan](/binaries/stack-offset.bin).

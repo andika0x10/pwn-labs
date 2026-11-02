@@ -14,8 +14,8 @@
     "build": "npm run prepare:emulator && npm run build -w apps/web",
     "preview": "npm run preview -w apps/web",
     "check": "npm run prepare:emulator && npm run check -w apps/web",
-    "deploy": "npm run deploy -w apps/web",
-    "deploy:staging": "npm run deploy:staging -w workers/do && npm run deploy:staging -w apps/web",
+    "deploy": "npm run prepare:emulator && npm run deploy -w apps/web",
+    "deploy:staging": "npm run prepare:emulator && npm run deploy:staging -w workers/do && npm run deploy:staging -w apps/web",
     "new:world": "node scripts/scaffold.mjs world",
     "new:level": "node scripts/scaffold.mjs level",
     "validate:content": "node scripts/validate-content.mjs",
@@ -23,7 +23,7 @@
     "prepare:emulator": "node scripts/prepare-emulator.mjs",
     "test:levels": "node scripts/test-levels.mjs",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/e2e.mjs",
     "lint": "eslint ."
   },
   "devDependencies": {

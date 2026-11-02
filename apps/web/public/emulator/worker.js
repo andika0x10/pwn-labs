@@ -1,18 +1,14 @@
 importScripts('/emulator/unicorn_x86.glue.cjs');
 
-const trampSigs = ['vii', 'viii', 'vijii', 'viijiji', 'iiijiji'];
+const signatures = ['vii', 'viii', 'vijii', 'viijiji', 'iiijiji'];
 let ready;
 let runner;
-let fixture;
-let steps = 0;
-
 async function initialize() {
-  if (ready) return ready;
-  ready = (async () => {
+  ready ??= (async () => {
     const core = await import('/emulator/core.mjs');
     const wasmModule = await WebAssembly.compileStreaming(fetch('/emulator/unicorn_x86.wasm'));
     const trampolines = {};
-    for (const sig of trampSigs) trampolines[sig] = await WebAssembly.compileStreaming(fetch(`/emulator/tramp_${sig}.wasm`));
+    for (const signature of signatures) trampolines[signature] = await WebAssembly.compileStreaming(fetch('/emulator/tramp_' + signature + '.wasm'));
     const uc = await MUnicorn({
       trampolines,
       instantiateWasm(imports, done) {
@@ -20,36 +16,27 @@ async function initialize() {
         return {};
       },
     });
-    fixture = core.buildBlob();
-    runner = core.createRunner(uc, fixture);
-    return { core };
+    return { core, uc };
   })();
   return ready;
 }
-
-function snapshot(result = {}) {
-  const eip = steps === 0 ? 0x08048000 : steps === 1 ? 0x08048011 : Number.parseInt(result.eip ?? '0x0804802c', 16);
-  return {
-    ...result,
-    registers: { eax: result.reachedWin ? 1 : 3, ebx: 0, ecx: 0xbfffefbc, edx: 256, esp: 0xbfffefa0, ebp: 0xbfffefdc, eip },
-    stack: Array.from({ length: 12 }, (_, index) => ({ address: 0xbfffefbc + index * 4, bytes: '41 41 41 41', role: index === 11 ? 'return address' : index === 0 ? 'buffer' : '' })),
-  };
-}
-
-self.onmessage = async (event) => {
-  const { id, command, payload } = event.data;
+self.onmessage = async ({ data: { id, command, payload, challenge } }) => {
   try {
-    await initialize();
-    if (command === 'load') { steps = 0; self.postMessage({ id, ok: true, data: snapshot({ reason: 'ready', stdout: '' }) }); return; }
-    if (command === 'step') { steps = Math.min(steps + 1, 2); self.postMessage({ id, ok: true, data: snapshot({ reason: 'step', stdout: '' }) }); return; }
-    if (command === 'run' || command === 'continue') {
-      const bytes = Uint8Array.from(payload ?? []);
-      const result = runner.run(bytes);
-      steps = 2;
-      self.postMessage({ id, ok: true, data: snapshot(result) });
+    const { core, uc } = await initialize();
+    if (command === 'load') {
+      if (!challenge || challenge.arch !== 'x86-32') throw new Error('Konfigurasi challenge tidak didukung.');
+      const response = await fetch(challenge.binary);
+      if (!response.ok) throw new Error('Binary tidak tersedia.');
+      const blob = new Uint8Array(await response.arrayBuffer());
+      if (!blob.length || blob.length > 4096) throw new Error('Ukuran binary tidak valid.');
+      runner?.close();
+      runner = core.createRunner(uc, { ...challenge, blob });
+      self.postMessage({ id, ok: true, data: runner.initial() });
       return;
     }
-    throw new Error(`Perintah ${command} tidak didukung.`);
+    if (!runner) throw new Error('Muat challenge sebelum menjalankan payload.');
+    if (command !== 'run') throw new Error('Perintah tidak didukung: ' + command);
+    self.postMessage({ id, ok: true, data: runner.run(Uint8Array.from(payload ?? [])) });
   } catch (error) {
     self.postMessage({ id, ok: false, error: { code: 'EMULATOR_ERROR', message: String(error?.message ?? error) } });
   }
